@@ -1297,11 +1297,50 @@ function SettingsModal({ show, onClose, gasUrl, setGasUrl }) {
 // ── 메인 앱 ──
 function App() {
   const [user, setUser] = useState(null);
-  const [responses, setResponses] = useState(DEMO_RESPONSES);
+  const [responses, setResponses] = useState([]);
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [gasUrl, setGasUrl] = useState(CONFIG.GAS_PROXY_URL);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+
+  // GAS에서 실제 설문 응답 불러오기
+  const fetchResponses = async (url) => {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const res = await fetch(url + "?action=responses");
+      const data = await res.json();
+      if (data.success && data.responses) {
+        setResponses(data.responses);
+      } else {
+        setLoadError(data.error || "응답을 불러올 수 없습니다");
+        setResponses(DEMO_RESPONSES);
+      }
+    } catch (err) {
+      setLoadError("서버 연결 실패: " + err.message);
+      setResponses(DEMO_RESPONSES);
+    }
+    setLoading(false);
+  };
+
+  // 로그인 성공 시 데이터 로딩
+  const handleLogin = (userData) => {
+    setUser(userData);
+    if (gasUrl) {
+      fetchResponses(gasUrl);
+    } else {
+      setResponses(DEMO_RESPONSES);
+    }
+  };
+
+  // GAS URL 변경 시 데이터 재로딩
+  useEffect(() => {
+    if (user && gasUrl) {
+      fetchResponses(gasUrl);
+    }
+  }, [gasUrl]);
 
   return (
     <>
@@ -1318,7 +1357,7 @@ function App() {
 
       <div className="min-h-screen" style={{ background: "var(--bg)", color: "var(--text)", fontFamily: "var(--font-body)" }}>
         {!user ? (
-          <LoginScreen onLogin={setUser} />
+          <LoginScreen onLogin={handleLogin} />
         ) : (
           <div className="max-w-lg mx-auto min-h-screen flex flex-col">
             {/* 상단 네비게이션 */}
@@ -1375,9 +1414,7 @@ function App() {
                 >
                   <span className="text-sm mt-0.5">⚡</span>
                   <div>
-                    <p className="text-xs font-medium" style={{ color: "var(--warning)" }}>
-                      데모 모드
-                    </p>
+                    <p className="text-xs font-medium" style={{ color: "var(--warning)" }}>데모 모드</p>
                     <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
                       GAS 프록시 URL이 미설정되어 샘플 데이터로 동작합니다. 설정에서 URL을 입력하세요.
                     </p>
@@ -1385,20 +1422,59 @@ function App() {
                 </div>
               )}
 
-              {selectedResponse ? (
+              {/* 로딩 상태 */}
+              {loading && (
+                <div className="flex items-center justify-center gap-2 py-8">
+                  <Icons.Spinner />
+                  <span className="text-sm" style={{ color: "var(--text-secondary)" }}>설문 응답을 불러오는 중...</span>
+                </div>
+              )}
+
+              {/* 에러 메시지 */}
+              {loadError && (
+                <div className="rounded-xl p-3 mb-4 flex items-start gap-2"
+                  style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)" }}>
+                  <span className="text-sm mt-0.5">⚠️</span>
+                  <div className="flex-1">
+                    <p className="text-xs font-medium" style={{ color: "var(--error)" }}>데이터 로딩 실패</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>{loadError}</p>
+                    <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>샘플 데이터로 표시합니다.</p>
+                  </div>
+                  <button onClick={() => fetchResponses(gasUrl)} className="text-xs px-2 py-1 rounded-lg"
+                    style={{ background: "var(--surface-hover)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}>
+                    재시도
+                  </button>
+                </div>
+              )}
+
+              {/* 메인 영역 */}
+              {!loading && (selectedResponse ? (
                 <ParticipantDetail
                   response={selectedResponse}
                   onBack={() => setSelectedResponse(null)}
                   gasUrl={gasUrl}
                 />
               ) : (
-                <ResponseList
-                  responses={responses}
-                  onSelect={setSelectedResponse}
-                  searchTerm={searchTerm}
-                  setSearchTerm={setSearchTerm}
-                />
-              )}
+                <>
+                  {/* 새로고침 버튼 */}
+                  {gasUrl && !loadError && (
+                    <div className="flex justify-end mb-2">
+                      <button onClick={() => fetchResponses(gasUrl)} className="text-[10px] px-2 py-1 rounded-lg flex items-center gap-1"
+                        style={{ color: "var(--muted)" }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-hover)"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                        🔄 새로고침
+                      </button>
+                    </div>
+                  )}
+                  <ResponseList
+                    responses={responses}
+                    onSelect={setSelectedResponse}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                  />
+                </>
+              ))}
             </main>
 
             {/* 하단 정보 */}
