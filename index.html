@@ -499,7 +499,7 @@ function DownloadCenter({ response, oneulResult, naeirResult, selectedPath, gasU
     // 실서비스: GAS 프록시로 Claude API 호출
     const res = await fetch(gasUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      redirect: "follow",
       body: JSON.stringify({
         action: "analyzeWithPrompt",
         systemPrompt: "당신은 데이터 추출 전문가입니다. 주어진 분석 결과에서 요청된 JSON 형식으로 정확하게 데이터를 추출합니다. JSON만 출력하고 다른 텍스트는 절대 포함하지 마십시오.",
@@ -907,7 +907,7 @@ function ParticipantDetail({ response, onBack, gasUrl }) {
 
     const res = await fetch(gasUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      redirect: "follow",
       body: JSON.stringify({ action: "analyzeWithPrompt", systemPrompt, userMessage }),
     });
     const data = await res.json();
