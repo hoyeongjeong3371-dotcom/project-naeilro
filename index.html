@@ -441,267 +441,125 @@ function ResponseList({ responses, onSelect, searchTerm, setSearchTerm }) {
 
 // ── 다운로드 센터 컴포넌트 ──
 function DownloadCenter({ response, oneulResult, naeirResult, selectedPath, gasUrl, downloadAsWord }) {
-  const [generating, setGenerating] = useState(null); // null | "iap" | "isp" | "word" | "all"
+  const [generating, setGenerating] = useState(null);
+  const [statusMsg, setStatusMsg] = useState("");
 
-  // AI 분석 결과를 구조화된 데이터로 파싱 (Claude API 활용)
-  const extractStructuredData = async (type) => {
-    const extractPrompt = type === "iap"
-      ? `다음 AI 분석 결과에서 IAP(자립경로) 서식에 들어갈 데이터를 JSON으로 추출하십시오.
-반드시 아래 JSON 형식만 출력하고 다른 텍스트는 일절 포함하지 마십시오.
-
-{
-  "weakness": "약점/문제점/취업 걸림돌 (2~3문장)",
-  "strength": "강점/잘하는 것/하고 싶은 것 (2~3문장)",
-  "shortTermGoal": "단기목표 1년 이내 (1~2문장)",
-  "midTermGoal": "중기목표 (1~2문장)",
-  "longTermGoal": "장기목표 5년 이내 (1~2문장)",
-  "targetPath": "목표경로 (일반기업 취업/자활기업 취업/일반기업 창업/자활기업 창업/기타)",
-  "needsHelp": "도움을 받고 싶은 것/필요한 것 (2~3문장)"
-}`
-      : `다음 AI 분석 결과에서 ISP(자활지원계획) 서식에 들어갈 데이터를 JSON으로 추출하십시오.
-반드시 아래 JSON 형식만 출력하고 다른 텍스트는 일절 포함하지 마십시오.
-
-{
-  "needs": [
-    {"rank": 1, "area": "욕구영역 (예: 취창업/심리정서/건강/주거/가족관계/경제/교육 등)", "content": "구체적 욕구 내용", "agreedNeed": "합의된 욕구", "agreedGoal": "합의된 목표", "task": "실행과제", "period": "실행기간", "stage": "게이트 또는 사업단"},
-    {"rank": 2, "area": "욕구영역", "content": "구체적 욕구 내용", "agreedNeed": "합의된 욕구", "agreedGoal": "합의된 목표", "task": "실행과제", "period": "실행기간", "stage": "게이트 또는 사업단"}
-  ]
-}`;
-
-    const fullData = `=== 오늘은 분석 결과 ===\n${oneulResult}\n\n=== 내일로 분석 결과 ===\n${naeirResult}\n\n=== 선택된 자활 경로 ===\n${selectedPath || "미선택"}`;
-
-    if (!gasUrl) {
-      // 데모 모드
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          if (type === "iap") {
-            resolve({
-              weakness: "자기 감정 표현의 만성적 억제, 도움 요청을 자존감 훼손으로 인식하는 경직된 신념, 장기 고립 시 감정 폭발 위험",
-              strength: "타인의 감정 상태를 빠르게 포착하는 높은 정서 지능, 목표 설정 후 포기하지 않는 집요한 완수 역량, 주변 환경을 빠르게 파악하는 관찰력",
-              shortTermGoal: "주 5일 안정적 출근 루틴 정착 및 담당자와 신뢰 관계 형성",
-              midTermGoal: "소규모 팀 협업 경험을 통한 직무 기술 습득 및 대인관계 확장",
-              longTermGoal: "독립적 자립 기반 마련 및 안정적 취업처 확보",
-              targetPath: selectedPath || "안정형",
-              needsHelp: "정서적 안정을 위한 정기적 상담 지원, 직무 역량 강화를 위한 직업훈련 연계, 건강 관리를 위한 의료 지원 연계",
-            });
-          } else {
-            resolve({
-              needs: [
-                { rank: 1, area: "심리정서", content: "감정 표현 억제로 인한 내면 고립 심화", agreedNeed: "안전한 환경에서 감정 표현 연습", agreedGoal: "주 1회 담당자와 5분 대화 실천", task: "정기 상담 연계 및 감정일기 작성", period: "2026.04~2026.09", stage: "사업단" },
-                { rank: 2, area: "취창업", content: "안정적 직무 환경에서의 역량 개발 필요", agreedNeed: "적성에 맞는 직무 배치 및 기술 습득", agreedGoal: "직무 기초교육 이수 및 자격증 1개 취득", task: "직업훈련 프로그램 참여", period: "2026.04~2026.12", stage: "사업단" },
-              ],
-            });
-          }
-        }, 1500);
+  // GAS에서 데이터 추출 + 템플릿 서식 생성
+  const generateFromTemplate = async (type) => {
+    if (type === "interview") {
+      setStatusMsg("면접지 생성 중...");
+      const genRes = await fetch(gasUrl, {
+        method: "POST",
+        redirect: "follow",
+        body: JSON.stringify({
+          action: "generateInterview",
+          data: { counselor: "" },
+          participant: { code: response.code, org: response.org },
+        }),
       });
+      const genData = await genRes.json();
+      if (!genData.success) throw new Error(genData.error || "면접지 생성 실패");
+      return genData;
     }
 
-    // 실서비스: GAS 프록시로 Claude API 호출
-    const res = await fetch(gasUrl, {
+    // 1단계: AI로 구조화된 데이터 추출
+    setStatusMsg(type === "iap" ? "IAP 데이터 추출 중..." : "ISP 데이터 추출 중...");
+    const extractAction = type === "iap" ? "extractForIAP" : "extractForISP";
+    const extractRes = await fetch(gasUrl, {
       method: "POST",
       redirect: "follow",
       body: JSON.stringify({
-        action: "analyzeWithPrompt",
-        systemPrompt: "당신은 데이터 추출 전문가입니다. 주어진 분석 결과에서 요청된 JSON 형식으로 정확하게 데이터를 추출합니다. JSON만 출력하고 다른 텍스트는 절대 포함하지 마십시오.",
-        userMessage: `${extractPrompt}\n\n${fullData}`,
+        action: extractAction,
+        oneulResult,
+        naeirResult,
+        selectedPath: selectedPath || "",
       }),
     });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error);
-    // JSON 파싱
-    const text = data.content.replace(/```json|```/g, "").trim();
-    return JSON.parse(text);
+    const extractData = await extractRes.json();
+    if (!extractData.success) throw new Error(extractData.error || "데이터 추출 실패");
+
+    // 2단계: 추출된 데이터로 템플릿 서식 생성
+    setStatusMsg(type === "iap" ? "IAP 서식 생성 중..." : "ISP 서식 생성 중...");
+    const generateAction = type === "iap" ? "generateIAP" : "generateISP";
+    const genRes = await fetch(gasUrl, {
+      method: "POST",
+      redirect: "follow",
+      body: JSON.stringify({
+        action: generateAction,
+        data: extractData.data,
+        participant: { code: response.code, org: response.org },
+      }),
+    });
+    const genData = await genRes.json();
+    if (!genData.success) throw new Error(genData.error || "서식 생성 실패");
+    return genData;
   };
 
-  // IAP Excel 다운로드
-  const downloadIAP = async () => {
-    setGenerating("iap");
+  const downloadItem = async (type) => {
+    setGenerating(type);
+    setStatusMsg("");
     try {
-      const data = await extractStructuredData("iap");
-      const date = new Date().toLocaleDateString("ko-KR");
-
-      // IAP 서식을 HTML 테이블로 생성 (Excel 호환)
-      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="utf-8">
-<style>
-  table { border-collapse: collapse; width: 100%; }
-  td, th { border: 1px solid #000; padding: 6px 8px; font-family: '맑은 고딕'; font-size: 10pt; vertical-align: top; }
-  .title { font-size: 14pt; font-weight: bold; text-align: center; border: none; }
-  .section { font-weight: bold; background: #E2EFDA; }
-  .label { background: #F2F2F2; width: 120px; font-weight: bold; }
-  .small { font-size: 9pt; color: #666; }
-</style></head><body>
-<table>
-  <tr><td colspan="6" class="title">IAP (자립경로)</td></tr>
-  <tr><td class="label">참여자 이름</td><td></td><td class="label">성별</td><td></td><td class="label">생년월일</td><td></td></tr>
-  <tr><td class="label">보장구분</td><td colspan="2"></td><td class="label">사업단명</td><td></td><td class="label">사례관리번호</td></tr>
-  <tr><td colspan="6" class="section">■ IAP(자립경로)</td></tr>
-  <tr><td class="label">IAP작성차수</td><td>1</td><td class="label">상담자</td><td></td><td class="label">상담일자</td><td>${date}</td></tr>
-  <tr><td colspan="6" class="section">■ 자가진단</td></tr>
-  <tr><td class="label">약점<br/><span class="small">(문제점, 취업 걸림돌 등)</span></td><td colspan="5">${data.weakness}</td></tr>
-  <tr><td class="label">강점<br/><span class="small">(잘하는 것, 하고 싶은 것 등)</span></td><td colspan="5">${data.strength}</td></tr>
-  <tr><td colspan="6" class="section">■ 장·단기 성과목표</td></tr>
-  <tr><td class="label">단기목표<br/><span class="small">(1년 이내)</span></td><td colspan="5">${data.shortTermGoal}</td></tr>
-  <tr><td class="label">중기목표</td><td colspan="5">${data.midTermGoal}</td></tr>
-  <tr><td class="label">장기목표<br/><span class="small">(5년 이내)</span></td><td colspan="5">${data.longTermGoal}</td></tr>
-  <tr><td colspan="6" class="section">■ 합의된 자활경로 및 요청사항</td></tr>
-  <tr><td class="label">목표경로</td><td colspan="5">${data.targetPath}</td></tr>
-  <tr><td class="label">도움을 받고 싶은 것<br/><span class="small">(필요한 것)</span></td><td colspan="5">${data.needsHelp}</td></tr>
-  <tr><td colspan="3" style="text-align:center; padding-top:20px;">${date}</td><td colspan="3"></td></tr>
-  <tr><td colspan="3" style="text-align:center;">참여자 :　　　　　(인)</td><td colspan="3" style="text-align:center;">사례관리자 :　　　　　(인)</td></tr>
-</table>
-<p style="font-size:8pt; color:#999; text-align:center; margin-top:10px;">프로젝트 내일로 AI 분석 기반 자동 생성 | 충북청주지역자활센터</p>
-</body></html>`;
-
-      const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `IAP_${response.code}_${new Date().toISOString().split("T")[0]}.xls`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const result = await generateFromTemplate(type);
+      setStatusMsg("다운로드 준비 완료!");
+      window.open(result.fileUrl, "_blank");
     } catch (err) {
-      alert("IAP 생성 오류: " + err.message);
+      alert((type === "iap" ? "IAP" : type === "isp" ? "ISP" : "면접지") + " 생성 오류: " + err.message);
     }
     setGenerating(null);
+    setStatusMsg("");
   };
 
-  // ISP Excel 다운로드
-  const downloadISP = async () => {
-    setGenerating("isp");
-    try {
-      const data = await extractStructuredData("isp");
-      const date = new Date().toLocaleDateString("ko-KR");
-
-      let needsRows = "";
-      data.needs.forEach((n) => {
-        needsRows += `<tr>
-          <td style="text-align:center;">${n.rank}</td>
-          <td>${n.area}</td>
-          <td>${n.content}</td>
-          <td>${n.agreedNeed}</td>
-          <td>${n.agreedGoal}</td>
-          <td>${n.task}</td>
-          <td>${n.period}</td>
-          <td>□게이트 ${n.stage === "사업단" ? "■" : "□"}사업단</td>
-          <td></td><td></td>
-        </tr>`;
-      });
-
-      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="utf-8">
-<style>
-  table { border-collapse: collapse; width: 100%; }
-  td, th { border: 1px solid #000; padding: 5px 6px; font-family: '맑은 고딕'; font-size: 9pt; vertical-align: top; }
-  .title { font-size: 14pt; font-weight: bold; text-align: center; border: none; }
-  .section { font-weight: bold; background: #E2EFDA; }
-  .label { background: #F2F2F2; font-weight: bold; }
-  .header { background: #D9E2F3; font-weight: bold; text-align: center; font-size: 8pt; }
-</style></head><body>
-<table>
-  <tr><td colspan="10" class="title">ISP(자활지원계획)</td></tr>
-  <tr><td class="label">참여자 이름</td><td colspan="2"></td><td class="label">성별</td><td></td><td class="label">생년월일</td><td colspan="2"></td><td class="label">연락처</td><td></td></tr>
-  <tr><td class="label">보장구분</td><td colspan="2"></td><td class="label">사업단명</td><td colspan="4"></td><td class="label">사례관리번호</td><td></td></tr>
-  <tr><td colspan="10" class="section">■ISP(자활 지원 계획) 목록</td></tr>
-  <tr>
-    <td colspan="3" class="header" style="background:#DAEEF3;">참여자의 제시된 욕구</td>
-    <td colspan="2" class="header" style="background:#E2EFDA;">합의된 욕구/목표</td>
-    <td colspan="2" class="header" style="background:#FCE4D6;">실행계획</td>
-    <td class="header" style="background:#FCE4D6;">실행단계</td>
-    <td colspan="2" class="header" style="background:#D6DCE4;">실행점검</td>
-  </tr>
-  <tr>
-    <td class="header">순위</td><td class="header">욕구영역</td><td class="header">내용</td>
-    <td class="header">합의된욕구</td><td class="header">합의된목표</td>
-    <td class="header">실행과제</td><td class="header">실행기간</td><td class="header">단계</td>
-    <td class="header">일자</td><td class="header">내용</td>
-  </tr>
-  ${needsRows}
-  <tr><td colspan="4" style="text-align:center; padding-top:20px;">${date}</td><td colspan="6"></td></tr>
-  <tr><td colspan="5" style="text-align:center;">참여자 :　　　　(인)</td><td colspan="5" style="text-align:center;">사례관리자 :　　　　(인)</td></tr>
-</table>
-<p style="font-size:8pt; color:#999; text-align:center; margin-top:10px;">프로젝트 내일로 AI 분석 기반 자동 생성 | 충북청주지역자활센터</p>
-</body></html>`;
-
-      const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `ISP_${response.code}_${new Date().toISOString().split("T")[0]}.xls`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      alert("ISP 생성 오류: " + err.message);
-    }
-    setGenerating(null);
-  };
-
-  // 종합 Word 다운로드
   const downloadIntegrated = () => {
     const report = `# 프로젝트 내일로 종합 분석 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n선택 경로: ${selectedPath || "미선택"}\n\n---\n\n## Part 1. 심층 DNA 분석 (오늘은)\n\n${oneulResult}\n\n---\n\n## Part 2. 실행 계획 설계 (내일로)\n\n${naeirResult}\n\n---\n\n> 본 리포트는 2개의 독립적인 AI 분석 프롬프트를 통해 생성되었습니다.\n> 충북청주지역자활센터 프로젝트 내일로 v2.0`;
     downloadAsWord(report, `내일로_종합리포트_${response.code}`);
   };
 
-  // 전체 일괄 다운로드
   const downloadAll = async () => {
     setGenerating("all");
-    await downloadIAP();
-    await downloadISP();
-    downloadIntegrated();
+    try {
+      await downloadItem("iap");
+      await downloadItem("isp");
+      await downloadItem("interview");
+      downloadIntegrated();
+    } catch (err) {
+      alert("일괄 다운로드 중 오류: " + err.message);
+    }
     setGenerating(null);
   };
 
   const items = [
-    {
-      id: "iap", icon: "📋", label: "IAP 서식",
-      desc: "자립경로 (약점/강점, 단·중·장기 목표, 자활경로)",
-      ext: ".xls", action: downloadIAP,
-    },
-    {
-      id: "isp", icon: "📊", label: "ISP 서식",
-      desc: "자활지원계획 (욕구영역, 합의 목표, 실행과제)",
-      ext: ".xls", action: downloadISP,
-    },
-    {
-      id: "word", icon: "📝", label: "종합 리포트",
-      desc: "오늘은 + 내일로 전체 분석 결과",
-      ext: ".doc", action: downloadIntegrated,
-    },
+    { id: "iap", icon: "📋", label: "IAP 서식", desc: "자립경로 (약점/강점, 단·중·장기 목표, 자활경로)", ext: ".xlsx", action: () => downloadItem("iap") },
+    { id: "isp", icon: "📊", label: "ISP 서식", desc: "자활지원계획 (욕구영역, 합의 목표, 실행과제)", ext: ".xlsx", action: () => downloadItem("isp") },
+    { id: "interview", icon: "📄", label: "기본면접지", desc: "참여자 기본면접기록지 (상담일자 자동 입력)", ext: ".xlsx", action: () => downloadItem("interview") },
+    { id: "word", icon: "📝", label: "종합 리포트", desc: "오늘은 + 내일로 전체 분석 결과", ext: ".doc", action: downloadIntegrated },
   ];
 
   return (
     <div className="rounded-xl overflow-hidden mb-4" style={{ border: "1px solid var(--border)" }}>
-      {/* 헤더 */}
       <div className="px-4 py-3 flex items-center justify-between" style={{ background: "rgba(91,141,239,0.06)", borderBottom: "1px solid var(--border)" }}>
         <div className="flex items-center gap-2">
           <Icons.Download />
           <span className="text-xs font-bold" style={{ color: "var(--accent)" }}>다운로드 센터</span>
         </div>
-        <button
-          onClick={downloadAll}
-          disabled={generating}
+        <button onClick={downloadAll} disabled={generating}
           className="text-[10px] px-3 py-1 rounded-full font-medium transition-all"
-          style={{
-            background: generating ? "var(--surface-active)" : "var(--accent)",
-            color: generating ? "var(--muted)" : "#fff",
-          }}
-        >
+          style={{ background: generating ? "var(--surface-active)" : "var(--accent)", color: generating ? "var(--muted)" : "#fff" }}>
           {generating === "all" ? "생성 중..." : "전체 다운로드"}
         </button>
       </div>
-
-      {/* 서식 목록 */}
+      {statusMsg && (
+        <div className="px-4 py-2 flex items-center gap-2" style={{ background: "var(--surface-active)" }}>
+          <Icons.Spinner />
+          <span className="text-[10px]" style={{ color: "var(--accent)" }}>{statusMsg}</span>
+        </div>
+      )}
       <div className="divide-y" style={{ background: "var(--surface)", borderColor: "var(--border-light)" }}>
         {items.map((item) => (
-          <button
-            key={item.id}
-            onClick={item.action}
-            disabled={generating}
+          <button key={item.id} onClick={item.action} disabled={generating}
             className="w-full text-left px-4 py-3 flex items-center gap-3 transition-all"
             style={{ opacity: generating && generating !== item.id && generating !== "all" ? 0.5 : 1 }}
             onMouseEnter={(e) => { if (!generating) e.currentTarget.style.background = "var(--surface-hover)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
             <span className="text-lg">{item.icon}</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -718,11 +576,9 @@ function DownloadCenter({ response, oneulResult, naeirResult, selectedPath, gasU
           </button>
         ))}
       </div>
-
-      {/* 안내 */}
       <div className="px-4 py-2" style={{ background: "var(--bg)", borderTop: "1px solid var(--border-light)" }}>
         <p className="text-[10px]" style={{ color: "var(--muted)" }}>
-          IAP·ISP 서식은 AI가 분석 결과를 자동 추출하여 해당 항목에 기입합니다. 다운로드 후 참여자 인적사항을 직접 보완해 주세요.
+          원본 서식이 100% 유지됩니다. AI가 분석 결과를 해당 셀에 자동 입력합니다. 다운로드 후 참여자 인적사항을 보완해 주세요.
         </p>
       </div>
     </div>
