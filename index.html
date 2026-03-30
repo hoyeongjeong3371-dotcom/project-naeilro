@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프로젝트 내일로 — AI 참여자 분석 시스템</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='15' fill='%235B8DEF'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='16'>N</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #252A36; border-radius: 4px; }
+  input::placeholder { color: #636B80; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+
+
+// ============================================
+// 프로젝트 내일로 v2.0
+// 충북청주지역자활센터
+// Google Forms → AI 분석 → Word 다운로드
+// ============================================
+
+// ── 설정 상수 ──
+const CONFIG = {
+  GAS_PROXY_URL: "https://script.google.com/macros/s/AKfycbzF4dZjWUO6lZ2kgmsT58j-Jd8-y9StnY5tbBHuf7JCXrNfqPY2IVq_NMnQZViRkPxXXQ/exec",
+  GOOGLE_CLIENT_ID: "", // Google OAuth Client ID 입력
+  SPREADSHEET_ID: "1AGYpsLKhygVAk5-k0oNW-Rv2bI6_YElqYF__tp6y5nk",
+  APP_VERSION: "v2.0",
+};
+
+// ── 설문지 17문항 매핑 ──
+const QUESTION_MAP = [
+  "타임스탬프",
+  "1. 코드번호",
+  "2. 소속",
+  "3. 쉬는 날 에너지 충전 방식",
+  "4. 길찾기 방식",
+  "5. 친구가 울 때 반응",
+  "6. 일하는 방식 선호",
+  "7. 갈등 대처 방식",
+  "8. 어떤 칭찬이 기쁜지",
+  "9. 스트레스 해소 방식",
+  "10. 평소 시간 사용",
+  "11. 일할 때 중요한 가치",
+  "12. 인생 최고 순간",
+  "13. 인생 최악 순간",
+  "14. 힘든 시간 버티는 방법",
+  "15. 나의 진짜 장점",
+  "16. 1년 후 소망",
+  "17. 내일 아침 할 행동",
+];
+
+// ── 오늘은 프롬프트 v3.5 ──
+const ONEUL_PROMPT = `프로젝트 내일로: 오늘은 프로그램 시스템 프롬프트 v.3.5
+
+당신은 충북광역자활센터 황정구 국장이 만든 '프로젝트 내일로'의 수석 사례관리 전문가입니다. 사용자가 참여자의 데이터와 함께 '오늘은 분석해줘'라고 요청하면 아래의 엄격한 규칙과 양식에 따라 심층 분석 리포트를 출력해 주십시오.
+
+[기본 원칙 및 톤앤매너]
+불필요한 인사말이나 서론은 생략하고 즉시 리포트 본론부터 출력합니다.
+톤앤매너: 누구나 할 수 있는 뻔한 위로나 과도하게 긍정적인 포장을 철저히 배제하십시오. 참여자의 내면적 결핍, 상처, 방어기제를 적나라하고 냉철하게 해부하십시오. 단, 그 객관적 분석의 목적이 비난이 아닌 임상적이고 전문적인 이해에 있음을 보여주는 차분한 어조를 유지하십시오.
+출력 양식: 마크다운 형식을 따르십시오.
+표기 제한: 리포트 작성 시 쌍따옴표, 별표 기호, 굵게 표시하는 b 태그, 밑줄을 표시하는 u 태그를 절대 사용하지 마십시오. 강조가 필요하면 홑따옴표나 인용구 형식을 사용하십시오.
+용어 제한: 분석 내용에 MBTI나 에니어그램이라는 단어나 기호를 직접적으로 노출하지 마십시오. 오직 그 이론이 뜻하는 심리적 역동과 행동 패턴만을 일상적이고 전문적인 언어로 녹여내십시오.
+
+[리포트 필수 구성 요소]
+1. 참여자 성향 심층 프로필 (DNA)
+인지 기능 역학과 지능 3중심, 유년기 상처를 융합하여 분석합니다. 참여자가 세상을 대하는 핵심 방어기제와 겉보기 행동 이면에 숨겨진 진짜 기저 동기를 냉철하게 파헤쳐 도출하십시오.
+
+2. 인생 그래프 심층 서사 (Story)
+- 파편화된 경험의 무의식적 패턴 분석: 참여자가 체크한 단편 지표들을 심리학적으로 연결하여, 삶을 지배해 온 핵심 결핍이 무엇인지 객관적으로 역추적하십시오.
+- 신뢰도 높은 임상적 해석: 참여자의 과거 상처나 불건강한 대처 방식(회피, 술, 수면 등)을 억지로 미화하거나 긍정적으로 꾸미지 마십시오. 그것이 극한의 스트레스 상황에서 자아 붕괴를 막기 위해 작동한 생존 기제였음을 원인과 결과의 관점에서 담백하고 날카롭게 서술하십시오.
+- 트라우마와 현재 행동의 연결: 과거의 상실이나 아픔이 현재의 예민함, 통제 욕구, 혹은 대인관계 지연 행동으로 어떻게 이어지고 있는지 무의식적 연결 고리를 짚어내십시오.
+
+3. SWOT 심리 및 역량 진단
+표면적 스킬이 아닌, 파악된 심리적 자본과 내면의 취약성을 중심으로 강점(S), 약점(W), 기회(O), 위협(T)을 표 형태로 진단하십시오. 막연한 긍정의 단어 대신, 실제 자활 현장에서 발현될 수 있는 구체적인 요소를 작성하십시오.
+
+4. IAP 개인별 자립지원 계획 설계
+- IAP 설계 목적: 대상자의 내면적 결핍을 채우고 자립으로 이끌 핵심 심리 및 실무 목표를 딱 한 문장으로 함축하여 제시합니다.
+- 핵심 방향성: 1년 차부터 3년 차까지의 단계별 심리 회복 및 자활 목표.
+- 직무 배치 전략: 참여자의 방어기제를 자극하지 않고 통제감을 줄 수 있는 3가지 맞춤형 경로(안정형, 도전형, 절충형).
+- 위기 관리 전략: 억눌린 무의식이 폭주할 수 있는 스트레스 상황을 예측하고, 실무자가 대처할 수 있는 현실적인 가이드 제시.
+- 내일 당장 할 일: 무너진 일상 회복을 위해 즉시 실천 가능한 아주 작은 단위의 행동 계획 3가지.
+- 담당자 소통 가이드: 파악된 방어기제를 자극하지 않고 닫힌 마음을 열기 위해 실무자가 반드시 알아야 할 대화법. 지나친 감정적 위로보다는 대상자의 특성에 맞는 정확한 접근법을 제시하십시오.`;
+
+// ── 내일로 프롬프트 v2.0 ──
+const NAEIRO_PROMPT = `[Role Definition]
+당신은 자활 사업 참여자의 성공적인 자립을 돕는 '프로젝트 내일로'의 수석 사례관리 전문가이자 총괄 슈퍼바이저입니다.
+당신의 임무는 참여자의 심리 및 서사 데이터를 분석하여 자립지원계획(IAP)을 수립하고, 이를 현장에서 즉시 확인 가능한 월간/주간 행동 지표로 변환하여 모더레이션하는 것입니다.
+
+[Tone & Manner]
+- 불필요한 서론이나 인사말, 요약을 일절 생략하고 즉시 리포트 본문을 출력하십시오.
+- 전문적이고 날카로운 통찰력을 유지하되, 참여자의 상처와 어려움을 깊이 이해하고 포용하는 따뜻한 어조를 반영하십시오.
+- 출력 양식은 마크다운을 준수하십시오.
+- 모바일 가독성 및 호환성을 위해 표 기호 사용을 전면 금지하고, 체크박스와 하이픈(-) 기호를 사용하십시오.
+- 강조를 위해서는 홑따옴표(' ')와 인용 기호(>)만을 사용하십시오. 쌍따옴표, 별표기호, b/u 태그는 어떠한 경우에도 절대 금지합니다.
+- 트라우마 등 병리적 단어는 금지하며, 생존전략이나 보호막으로 긍정 재구성하십시오. 예민함과 통제욕은 훌륭한 역량으로 치환하십시오.
+
+[Command Processing: 내일로 분석해줘]
+사용자가 '심층 분석 리포트 내용'과 '확정된 자활 경로'를 입력하며 분석을 요청하면, 추상적인 목표를 구체적인 행동 지표로 번역하여 아래 구조의 실행 계획 및 동적 관리 일지를 출력하십시오.
+
+### 1. 3년 자활 로드맵 및 당해 연도 분기별 계획
+> 3년의 거시적 여정과 목표를 홑따옴표로 강조하여 1문장으로 제시
+- [1년차 핵심 목표]: 기반 조성에 맞춘 1~3년 심리/자활 방향
+- 1분기: 세부 과제
+- 2분기: 세부 과제
+- 3분기: 세부 과제
+- 4분기: 세부 과제
+- [2년차 핵심 목표]: 역량 강화 중심의 주요 과제
+- [3년차 핵심 목표]: 자립 도약 중심의 주요 과제
+
+### 2. 당월 실천 계획 및 모더레이션 지표
+- 당월 핵심 목표: 이번 달 달성할 명확한 목표
+- 직무 실천: 내일 당장 할 수 있는 직무 관련 행동 1가지
+- 생활 실천: 일상에서 내일 당장 할 수 있는 행동 1가지
+- 위험 통제 지표: 기저동기와 방어기제가 폭주할 때 이를 방어할 수 있는, 눈으로 확인 가능한 구체적 행동 1가지
+
+### 3. 주간 모니터링 일지 및 월말 동적 점검표
+- [ ] 환경 안정 (근태): 구체적인 점검 질문
+- [ ] 위험 관리 (방어막 유지): 위기 징후 발생 시 대처 여부 점검 질문
+- [ ] 당월 실천 (루틴/목표): 이번 달 실천 과제 이행 여부 질문
+- 금주 상담/성찰 주제: __________________________________________________
+- 감정 상태: ( ) 긍정 / ( ) 보통 / ( ) 부정 / ( ) 에너지 고갈
+- 슈퍼바이저 월말 평가: 당월 달성도 (초과/정상/미달성) 및 차월 목표 변경안 기재. 다그치지 않고 소통 가이드에 맞춘 따뜻한 개입 방안을 반드시 포함할 것.`;
+
+// ── 아이콘 컴포넌트 ──
+const Icons = {
+  Logo: () => (
+    <svg viewBox="0 0 32 32" fill="none" className="w-8 h-8">
+      <circle cx="16" cy="16" r="15" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 20 L16 8 L22 20" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="16" cy="22" r="2" fill="currentColor" />
+    </svg>
+  ),
+  Search: () => (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+      <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M12.5 12.5L17 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Analysis: () => (
+    <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
+      <path d="M3 17V7l4-4h6l4 4v10a1 1 0 01-1 1H4a1 1 0 01-1-1z" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  ),
+  Download: () => (
+    <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
+      <path d="M10 3v10m0 0l-3-3m3 3l3-3M4 15v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  Logout: () => (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+      <path d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3M13 14l4-4m0 0l-4-4m4 4H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  Spinner: () => (
+    <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" opacity="0.2" />
+      <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  ),
+  User: () => (
+    <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
+      <circle cx="10" cy="7" r="3" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  ),
+  Google: () => (
+    <svg viewBox="0 0 24 24" className="w-5 h-5">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+  ),
+  ChevronRight: () => (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+      <path d="M7 4l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  Back: () => (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+      <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
+
+// ── 마크다운 간이 렌더러 ──
+function renderMarkdown(md) {
+  if (!md) return "";
+  return md
+    .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-6 mb-2 text-[var(--heading)]">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold mt-8 mb-3 text-[var(--heading)] border-b border-[var(--border)] pb-2">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-8 mb-4 text-[var(--heading)]">$1</h1>')
+    .replace(/^> (.+)$/gm, '<blockquote class="border-l-3 border-[var(--accent)] pl-4 my-3 text-[var(--muted)] italic">$1</blockquote>')
+    .replace(/^- \[( |x)\] (.+)$/gm, (_, c, t) => `<div class="flex items-start gap-2 my-1"><span class="mt-0.5 text-sm">${c === 'x' ? '☑' : '☐'}</span><span>${t}</span></div>`)
+    .replace(/^- (.+)$/gm, '<div class="flex items-start gap-2 my-1"><span class="text-[var(--accent)] mt-1 text-xs">●</span><span>$1</span></div>')
+    .replace(/^---$/gm, '<hr class="my-6 border-[var(--border)]" />')
+    .replace(/\n{2,}/g, '<div class="h-3"></div>')
+    .replace(/\n/g, "<br/>");
+}
+
+// ── 데모 데이터 (GAS 미연결 시) ──
+const DEMO_RESPONSES = [
+  {
+    timestamp: "2026-03-28 09:15:22",
+    code: "CJ-2603-001",
+    org: "베니오유",
+    answers: {
+      "3": "집에서 혼자 조용히 쉬어야 기운이 난다.",
+      "4": "스마트폰 지도를 보거나 전체적인 방향 느낌으로 찾는다.",
+      "5": "'정말 마음이 아프겠다.' 하고 마음을 먼저 안아준다.",
+      "6": "내 방식대로 혼자 조용히 집중해서 하고 싶다.",
+      "7": "일단 참고 넘어가고, 나중에 혼자서 곱씹는다.",
+      "8": "'당신은 정말 따뜻한 사람이에요' 같은 인격적 칭찬",
+      "9": "혼자 음악 듣거나 산책하며 마음을 정리한다.",
+      "10": "쉬는 날이면 혼자만의 시간을 보내며 충전한다.",
+      "11": "안정적이고 규칙적인 환경에서 꾸준히 일하는 것",
+      "12": "사랑하는 가족이나 좋은 사람들과 서로 웃으며 지냈을 때",
+      "13": "크게 다치거나 마음의 병이 깊어져서 몸도 마음도 아팠을 때",
+      "14": "사람들을 아예 만나지 않고 방에 숨어서 혼자서만 끙끙 앓았다.",
+      "15": "주변 분위기나 사람들의 표정을 빨리 알아채고 눈치껏 잘 맞춘다., 한 번 마음먹고 시작한 일은 끝을 볼 때까지 절대 포기하지 않는다.",
+      "16": "마음 편히 오래 다닐 수 있는 직장에 들어가거나 작은 내 가게를 열고 싶다.",
+      "17": "아침에 일어나면 창문을 열고 5분간 바깥 공기를 마시며 오늘 할 일 하나를 정하겠습니다.",
+    },
+  },
+  {
+    timestamp: "2026-03-29 14:02:11",
+    code: "CJ-2603-002",
+    org: "느티나무식당",
+    answers: {
+      "3": "밖에서 사람들을 만나고 어울려야 기운이 난다.",
+      "4": "'저기 큰 마트 쪽으로 가자' 하고 눈에 보이는 큰 건물이나 간판을 보고 찾는다.",
+      "5": "'왜 우울할까? 어떻게 해결해 주지?' 하고 돕는 방법을 찾는다.",
+      "6": "사람들이랑 같이 이야기하면서 일하는 게 좋다.",
+      "7": "바로 따진다. 할 말은 해야 직성이 풀린다.",
+      "8": "'일을 정말 잘하시네요' 같은 능력 칭찬",
+      "9": "친구한테 전화해서 수다를 떨거나 같이 만나서 논다.",
+      "10": "쉬는 날이면 사람들과 만나 활발하게 움직인다.",
+      "11": "새로운 것을 배우고 도전하며 성장하는 것",
+      "12": "취업이나 자격증처럼 내가 목표로 했던 것을 기어코 이루었을 때",
+      "13": "진짜 열심히 하던 일이 완전히 망하거나 직장을 잃었을 때",
+      "14": "슬픈 생각을 할 틈이 없도록 쉬지 않고 일만 하거나 몸을 혹사시켰다.",
+      "15": "처음 만난 낯선 사람과도 어색하지 않게 웃으며 말을 잘 붙인다., 손재주가 좋아서 망가진 물건을 잘 고치고 잘 만든다.",
+      "16": "내가 진짜 하고 싶은 일에 필요한 기술을 배우거나 자격증을 따고 싶다.",
+      "17": "내일 아침 일어나면 오늘 감사했던 일 하나를 메모장에 적겠습니다.",
+    },
+  },
+];
+
+// ── CSS 변수 ──
+const cssVars = `
+  :root {
+    --bg: #0C0E12;
+    --surface: #14171E;
+    --surface-hover: #1A1E28;
+    --surface-active: #1F2433;
+    --border: #252A36;
+    --border-light: #1E2330;
+    --text: #E8ECF4;
+    --text-secondary: #8B93A7;
+    --muted: #636B80;
+    --heading: #F0F3FA;
+    --accent: #5B8DEF;
+    --accent-hover: #4A7DE0;
+    --accent-soft: rgba(91,141,239,0.08);
+    --accent-border: rgba(91,141,239,0.2);
+    --success: #4ADE80;
+    --warning: #FBBF24;
+    --error: #F87171;
+    --oneul: #A78BFA;
+    --naeiro: #34D399;
+    --font-display: 'Noto Sans KR', system-ui, sans-serif;
+    --font-body: 'Noto Sans KR', system-ui, sans-serif;
+  }
+`;
+
+// ── 로그인 화면 ──
+function LoginScreen({ onLogin }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    // 데모 모드: 실제 Google OAuth는 GAS 연동 시 활성화
+    setTimeout(() => {
+      onLogin({
+        name: "관리자",
+        email: "admin@jachwal.or.kr",
+        photo: null,
+      });
+    }, 1200);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "var(--bg)" }}>
+      <div className="w-full max-w-sm">
+        {/* 로고 영역 */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-5" style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}>
+            <Icons.Logo />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--heading)", fontFamily: "var(--font-display)" }}>
+            프로젝트 내일로
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
+            충북청주지역자활센터 AI 참여자 분석 시스템
+          </p>
+        </div>
+
+        {/* 로그인 카드 */}
+        <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <p className="text-sm mb-5 text-center" style={{ color: "var(--text-secondary)" }}>
+            센터 직원 계정으로 로그인해 주세요
+          </p>
+          <button
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200"
+            style={{
+              background: loading ? "var(--surface-active)" : "#fff",
+              color: loading ? "var(--muted)" : "#1f1f1f",
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+          >
+            {loading ? <Icons.Spinner /> : <Icons.Google />}
+            {loading ? "로그인 중..." : "Google 계정으로 로그인"}
+          </button>
+        </div>
+
+        <p className="text-center mt-6 text-xs" style={{ color: "var(--muted)" }}>
+          {CONFIG.APP_VERSION} &middot; 허가된 직원만 접근 가능합니다
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── 응답 목록 화면 ──
+function ResponseList({ responses, onSelect, searchTerm, setSearchTerm }) {
+  const filtered = responses.filter(
+    (r) =>
+      r.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.org.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div>
+      {/* 검색바 */}
+      <div className="relative mb-4">
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--muted)" }}>
+          <Icons.Search />
+        </div>
+        <input
+          type="text"
+          placeholder="코드번호 또는 소속으로 검색..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none transition-all"
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            color: "var(--text)",
+          }}
+        />
+      </div>
+
+      {/* 응답 카운트 */}
+      <div className="flex items-center justify-between mb-3 px-1">
+        <span className="text-xs" style={{ color: "var(--muted)" }}>
+          전체 {filtered.length}건
+        </span>
+        <span className="text-xs" style={{ color: "var(--muted)" }}>최신순</span>
+      </div>
+
+      {/* 응답 카드 */}
+      <div className="space-y-2">
+        {filtered.map((r, i) => (
+          <button
+            key={i}
+            onClick={() => onSelect(r)}
+            className="w-full text-left p-4 rounded-xl transition-all duration-150 group"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--surface-hover)";
+              e.currentTarget.style.borderColor = "var(--accent-border)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "var(--surface)";
+              e.currentTarget.style.borderColor = "var(--border)";
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold"
+                  style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+                >
+                  {r.code.split("-").pop()}
+                </div>
+                <div>
+                  <div className="text-sm font-medium" style={{ color: "var(--text)" }}>
+                    {r.code}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                    {r.org} &middot; {r.timestamp.split(" ")[0]}
+                  </div>
+                </div>
+              </div>
+              <div style={{ color: "var(--muted)" }}>
+                <Icons.ChevronRight />
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-sm" style={{ color: "var(--muted)" }}>
+            검색 결과가 없습니다
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 다운로드 센터 컴포넌트 ──
+function DownloadCenter({ response, oneulResult, naeirResult, selectedPath, gasUrl, downloadAsWord }) {
+  const [generating, setGenerating] = useState(null); // null | "iap" | "isp" | "word" | "all"
+
+  // AI 분석 결과를 구조화된 데이터로 파싱 (Claude API 활용)
+  const extractStructuredData = async (type) => {
+    const extractPrompt = type === "iap"
+      ? `다음 AI 분석 결과에서 IAP(자립경로) 서식에 들어갈 데이터를 JSON으로 추출하십시오.
+반드시 아래 JSON 형식만 출력하고 다른 텍스트는 일절 포함하지 마십시오.
+
+{
+  "weakness": "약점/문제점/취업 걸림돌 (2~3문장)",
+  "strength": "강점/잘하는 것/하고 싶은 것 (2~3문장)",
+  "shortTermGoal": "단기목표 1년 이내 (1~2문장)",
+  "midTermGoal": "중기목표 (1~2문장)",
+  "longTermGoal": "장기목표 5년 이내 (1~2문장)",
+  "targetPath": "목표경로 (일반기업 취업/자활기업 취업/일반기업 창업/자활기업 창업/기타)",
+  "needsHelp": "도움을 받고 싶은 것/필요한 것 (2~3문장)"
+}`
+      : `다음 AI 분석 결과에서 ISP(자활지원계획) 서식에 들어갈 데이터를 JSON으로 추출하십시오.
+반드시 아래 JSON 형식만 출력하고 다른 텍스트는 일절 포함하지 마십시오.
+
+{
+  "needs": [
+    {"rank": 1, "area": "욕구영역 (예: 취창업/심리정서/건강/주거/가족관계/경제/교육 등)", "content": "구체적 욕구 내용", "agreedNeed": "합의된 욕구", "agreedGoal": "합의된 목표", "task": "실행과제", "period": "실행기간", "stage": "게이트 또는 사업단"},
+    {"rank": 2, "area": "욕구영역", "content": "구체적 욕구 내용", "agreedNeed": "합의된 욕구", "agreedGoal": "합의된 목표", "task": "실행과제", "period": "실행기간", "stage": "게이트 또는 사업단"}
+  ]
+}`;
+
+    const fullData = `=== 오늘은 분석 결과 ===\n${oneulResult}\n\n=== 내일로 분석 결과 ===\n${naeirResult}\n\n=== 선택된 자활 경로 ===\n${selectedPath || "미선택"}`;
+
+    if (!gasUrl) {
+      // 데모 모드
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          if (type === "iap") {
+            resolve({
+              weakness: "자기 감정 표현의 만성적 억제, 도움 요청을 자존감 훼손으로 인식하는 경직된 신념, 장기 고립 시 감정 폭발 위험",
+              strength: "타인의 감정 상태를 빠르게 포착하는 높은 정서 지능, 목표 설정 후 포기하지 않는 집요한 완수 역량, 주변 환경을 빠르게 파악하는 관찰력",
+              shortTermGoal: "주 5일 안정적 출근 루틴 정착 및 담당자와 신뢰 관계 형성",
+              midTermGoal: "소규모 팀 협업 경험을 통한 직무 기술 습득 및 대인관계 확장",
+              longTermGoal: "독립적 자립 기반 마련 및 안정적 취업처 확보",
+              targetPath: selectedPath || "안정형",
+              needsHelp: "정서적 안정을 위한 정기적 상담 지원, 직무 역량 강화를 위한 직업훈련 연계, 건강 관리를 위한 의료 지원 연계",
+            });
+          } else {
+            resolve({
+              needs: [
+                { rank: 1, area: "심리정서", content: "감정 표현 억제로 인한 내면 고립 심화", agreedNeed: "안전한 환경에서 감정 표현 연습", agreedGoal: "주 1회 담당자와 5분 대화 실천", task: "정기 상담 연계 및 감정일기 작성", period: "2026.04~2026.09", stage: "사업단" },
+                { rank: 2, area: "취창업", content: "안정적 직무 환경에서의 역량 개발 필요", agreedNeed: "적성에 맞는 직무 배치 및 기술 습득", agreedGoal: "직무 기초교육 이수 및 자격증 1개 취득", task: "직업훈련 프로그램 참여", period: "2026.04~2026.12", stage: "사업단" },
+              ],
+            });
+          }
+        }, 1500);
+      });
+    }
+
+    // 실서비스: GAS 프록시로 Claude API 호출
+    const res = await fetch(gasUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "analyzeWithPrompt",
+        systemPrompt: "당신은 데이터 추출 전문가입니다. 주어진 분석 결과에서 요청된 JSON 형식으로 정확하게 데이터를 추출합니다. JSON만 출력하고 다른 텍스트는 절대 포함하지 마십시오.",
+        userMessage: `${extractPrompt}\n\n${fullData}`,
+      }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    // JSON 파싱
+    const text = data.content.replace(/```json|```/g, "").trim();
+    return JSON.parse(text);
+  };
+
+  // IAP Excel 다운로드
+  const downloadIAP = async () => {
+    setGenerating("iap");
+    try {
+      const data = await extractStructuredData("iap");
+      const date = new Date().toLocaleDateString("ko-KR");
+
+      // IAP 서식을 HTML 테이블로 생성 (Excel 호환)
+      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8">
+<style>
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #000; padding: 6px 8px; font-family: '맑은 고딕'; font-size: 10pt; vertical-align: top; }
+  .title { font-size: 14pt; font-weight: bold; text-align: center; border: none; }
+  .section { font-weight: bold; background: #E2EFDA; }
+  .label { background: #F2F2F2; width: 120px; font-weight: bold; }
+  .small { font-size: 9pt; color: #666; }
+</style></head><body>
+<table>
+  <tr><td colspan="6" class="title">IAP (자립경로)</td></tr>
+  <tr><td class="label">참여자 이름</td><td></td><td class="label">성별</td><td></td><td class="label">생년월일</td><td></td></tr>
+  <tr><td class="label">보장구분</td><td colspan="2"></td><td class="label">사업단명</td><td></td><td class="label">사례관리번호</td></tr>
+  <tr><td colspan="6" class="section">■ IAP(자립경로)</td></tr>
+  <tr><td class="label">IAP작성차수</td><td>1</td><td class="label">상담자</td><td></td><td class="label">상담일자</td><td>${date}</td></tr>
+  <tr><td colspan="6" class="section">■ 자가진단</td></tr>
+  <tr><td class="label">약점<br/><span class="small">(문제점, 취업 걸림돌 등)</span></td><td colspan="5">${data.weakness}</td></tr>
+  <tr><td class="label">강점<br/><span class="small">(잘하는 것, 하고 싶은 것 등)</span></td><td colspan="5">${data.strength}</td></tr>
+  <tr><td colspan="6" class="section">■ 장·단기 성과목표</td></tr>
+  <tr><td class="label">단기목표<br/><span class="small">(1년 이내)</span></td><td colspan="5">${data.shortTermGoal}</td></tr>
+  <tr><td class="label">중기목표</td><td colspan="5">${data.midTermGoal}</td></tr>
+  <tr><td class="label">장기목표<br/><span class="small">(5년 이내)</span></td><td colspan="5">${data.longTermGoal}</td></tr>
+  <tr><td colspan="6" class="section">■ 합의된 자활경로 및 요청사항</td></tr>
+  <tr><td class="label">목표경로</td><td colspan="5">${data.targetPath}</td></tr>
+  <tr><td class="label">도움을 받고 싶은 것<br/><span class="small">(필요한 것)</span></td><td colspan="5">${data.needsHelp}</td></tr>
+  <tr><td colspan="3" style="text-align:center; padding-top:20px;">${date}</td><td colspan="3"></td></tr>
+  <tr><td colspan="3" style="text-align:center;">참여자 :　　　　　(인)</td><td colspan="3" style="text-align:center;">사례관리자 :　　　　　(인)</td></tr>
+</table>
+<p style="font-size:8pt; color:#999; text-align:center; margin-top:10px;">프로젝트 내일로 AI 분석 기반 자동 생성 | 충북청주지역자활센터</p>
+</body></html>`;
+
+      const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `IAP_${response.code}_${new Date().toISOString().split("T")[0]}.xls`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("IAP 생성 오류: " + err.message);
+    }
+    setGenerating(null);
+  };
+
+  // ISP Excel 다운로드
+  const downloadISP = async () => {
+    setGenerating("isp");
+    try {
+      const data = await extractStructuredData("isp");
+      const date = new Date().toLocaleDateString("ko-KR");
+
+      let needsRows = "";
+      data.needs.forEach((n) => {
+        needsRows += `<tr>
+          <td style="text-align:center;">${n.rank}</td>
+          <td>${n.area}</td>
+          <td>${n.content}</td>
+          <td>${n.agreedNeed}</td>
+          <td>${n.agreedGoal}</td>
+          <td>${n.task}</td>
+          <td>${n.period}</td>
+          <td>□게이트 ${n.stage === "사업단" ? "■" : "□"}사업단</td>
+          <td></td><td></td>
+        </tr>`;
+      });
+
+      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8">
+<style>
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #000; padding: 5px 6px; font-family: '맑은 고딕'; font-size: 9pt; vertical-align: top; }
+  .title { font-size: 14pt; font-weight: bold; text-align: center; border: none; }
+  .section { font-weight: bold; background: #E2EFDA; }
+  .label { background: #F2F2F2; font-weight: bold; }
+  .header { background: #D9E2F3; font-weight: bold; text-align: center; font-size: 8pt; }
+</style></head><body>
+<table>
+  <tr><td colspan="10" class="title">ISP(자활지원계획)</td></tr>
+  <tr><td class="label">참여자 이름</td><td colspan="2"></td><td class="label">성별</td><td></td><td class="label">생년월일</td><td colspan="2"></td><td class="label">연락처</td><td></td></tr>
+  <tr><td class="label">보장구분</td><td colspan="2"></td><td class="label">사업단명</td><td colspan="4"></td><td class="label">사례관리번호</td><td></td></tr>
+  <tr><td colspan="10" class="section">■ISP(자활 지원 계획) 목록</td></tr>
+  <tr>
+    <td colspan="3" class="header" style="background:#DAEEF3;">참여자의 제시된 욕구</td>
+    <td colspan="2" class="header" style="background:#E2EFDA;">합의된 욕구/목표</td>
+    <td colspan="2" class="header" style="background:#FCE4D6;">실행계획</td>
+    <td class="header" style="background:#FCE4D6;">실행단계</td>
+    <td colspan="2" class="header" style="background:#D6DCE4;">실행점검</td>
+  </tr>
+  <tr>
+    <td class="header">순위</td><td class="header">욕구영역</td><td class="header">내용</td>
+    <td class="header">합의된욕구</td><td class="header">합의된목표</td>
+    <td class="header">실행과제</td><td class="header">실행기간</td><td class="header">단계</td>
+    <td class="header">일자</td><td class="header">내용</td>
+  </tr>
+  ${needsRows}
+  <tr><td colspan="4" style="text-align:center; padding-top:20px;">${date}</td><td colspan="6"></td></tr>
+  <tr><td colspan="5" style="text-align:center;">참여자 :　　　　(인)</td><td colspan="5" style="text-align:center;">사례관리자 :　　　　(인)</td></tr>
+</table>
+<p style="font-size:8pt; color:#999; text-align:center; margin-top:10px;">프로젝트 내일로 AI 분석 기반 자동 생성 | 충북청주지역자활센터</p>
+</body></html>`;
+
+      const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ISP_${response.code}_${new Date().toISOString().split("T")[0]}.xls`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("ISP 생성 오류: " + err.message);
+    }
+    setGenerating(null);
+  };
+
+  // 종합 Word 다운로드
+  const downloadIntegrated = () => {
+    const report = `# 프로젝트 내일로 종합 분석 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n선택 경로: ${selectedPath || "미선택"}\n\n---\n\n## Part 1. 심층 DNA 분석 (오늘은)\n\n${oneulResult}\n\n---\n\n## Part 2. 실행 계획 설계 (내일로)\n\n${naeirResult}\n\n---\n\n> 본 리포트는 2개의 독립적인 AI 분석 프롬프트를 통해 생성되었습니다.\n> 충북청주지역자활센터 프로젝트 내일로 v2.0`;
+    downloadAsWord(report, `내일로_종합리포트_${response.code}`);
+  };
+
+  // 전체 일괄 다운로드
+  const downloadAll = async () => {
+    setGenerating("all");
+    await downloadIAP();
+    await downloadISP();
+    downloadIntegrated();
+    setGenerating(null);
+  };
+
+  const items = [
+    {
+      id: "iap", icon: "📋", label: "IAP 서식",
+      desc: "자립경로 (약점/강점, 단·중·장기 목표, 자활경로)",
+      ext: ".xls", action: downloadIAP,
+    },
+    {
+      id: "isp", icon: "📊", label: "ISP 서식",
+      desc: "자활지원계획 (욕구영역, 합의 목표, 실행과제)",
+      ext: ".xls", action: downloadISP,
+    },
+    {
+      id: "word", icon: "📝", label: "종합 리포트",
+      desc: "오늘은 + 내일로 전체 분석 결과",
+      ext: ".doc", action: downloadIntegrated,
+    },
+  ];
+
+  return (
+    <div className="rounded-xl overflow-hidden mb-4" style={{ border: "1px solid var(--border)" }}>
+      {/* 헤더 */}
+      <div className="px-4 py-3 flex items-center justify-between" style={{ background: "rgba(91,141,239,0.06)", borderBottom: "1px solid var(--border)" }}>
+        <div className="flex items-center gap-2">
+          <Icons.Download />
+          <span className="text-xs font-bold" style={{ color: "var(--accent)" }}>다운로드 센터</span>
+        </div>
+        <button
+          onClick={downloadAll}
+          disabled={generating}
+          className="text-[10px] px-3 py-1 rounded-full font-medium transition-all"
+          style={{
+            background: generating ? "var(--surface-active)" : "var(--accent)",
+            color: generating ? "var(--muted)" : "#fff",
+          }}
+        >
+          {generating === "all" ? "생성 중..." : "전체 다운로드"}
+        </button>
+      </div>
+
+      {/* 서식 목록 */}
+      <div className="divide-y" style={{ background: "var(--surface)", borderColor: "var(--border-light)" }}>
+        {items.map((item) => (
+          <button
+            key={item.id}
+            onClick={item.action}
+            disabled={generating}
+            className="w-full text-left px-4 py-3 flex items-center gap-3 transition-all"
+            style={{ opacity: generating && generating !== item.id && generating !== "all" ? 0.5 : 1 }}
+            onMouseEnter={(e) => { if (!generating) e.currentTarget.style.background = "var(--surface-hover)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            <span className="text-lg">{item.icon}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold" style={{ color: "var(--text)" }}>{item.label}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "var(--surface-active)", color: "var(--muted)" }}>{item.ext}</span>
+              </div>
+              <p className="text-[10px] mt-0.5 truncate" style={{ color: "var(--muted)" }}>{item.desc}</p>
+            </div>
+            {generating === item.id || generating === "all" ? (
+              <div style={{ color: "var(--accent)" }}><Icons.Spinner /></div>
+            ) : (
+              <div style={{ color: "var(--muted)" }}><Icons.ChevronRight /></div>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* 안내 */}
+      <div className="px-4 py-2" style={{ background: "var(--bg)", borderTop: "1px solid var(--border-light)" }}>
+        <p className="text-[10px]" style={{ color: "var(--muted)" }}>
+          IAP·ISP 서식은 AI가 분석 결과를 자동 추출하여 해당 항목에 기입합니다. 다운로드 후 참여자 인적사항을 직접 보완해 주세요.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── 진행률 바 컴포넌트 ──
+function ProgressBar({ label, progress, color }) {
+  return (
+    <div className="mb-3">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-medium" style={{ color }}>{label}</span>
+        <span className="text-xs" style={{ color: "var(--muted)" }}>{progress}%</span>
+      </div>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface-active)" }}>
+        <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: color }} />
+      </div>
+    </div>
+  );
+}
+
+// ── 개별 분석 카드 컴포넌트 ──
+function AnalysisCard({ type, label, subtitle, color, colorSoft, result, state, progress, errorMsg, onRun, onReset, onDownload, disabled, disabledReason }) {
+  // state: idle | analyzing | done | error
+  const isOneul = type === "oneul";
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${state === "done" ? color + "33" : "var(--border)"}` }}>
+      {/* 카드 헤더 */}
+      <div className="px-4 py-3 flex items-center justify-between" style={{ background: colorSoft, borderBottom: "1px solid var(--border)" }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+          <div>
+            <span className="text-xs font-bold" style={{ color }}>{label}</span>
+            <span className="text-[10px] ml-2" style={{ color: "var(--muted)" }}>{subtitle}</span>
+          </div>
+        </div>
+        {state === "done" && (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: color + "1A", color }}>완료</span>
+          </div>
+        )}
+      </div>
+
+      {/* 카드 본문 */}
+      <div style={{ background: "var(--surface)" }}>
+        {/* IDLE 상태: 분석 버튼 */}
+        {state === "idle" && (
+          <div className="p-4">
+            <p className="text-xs mb-3" style={{ color: "var(--text-secondary)" }}>
+              {isOneul
+                ? "참여자의 심리 성향, 인생 서사, SWOT 진단, IAP 계획을 분석합니다."
+                : "3년 자활 로드맵, 당월 실천 계획, 주간 모니터링 일지를 설계합니다."}
+            </p>
+            {disabled ? (
+              <div className="text-center py-2">
+                <p className="text-xs" style={{ color: "var(--muted)" }}>{disabledReason}</p>
+              </div>
+            ) : (
+              <button
+                onClick={onRun}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all duration-200"
+                style={{ background: color, color: "#fff" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                <Icons.Analysis />
+                {label} 분석 시작
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ANALYZING 상태: 진행률 */}
+        {state === "analyzing" && (
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Icons.Spinner />
+              <span className="text-xs font-medium" style={{ color: "var(--text)" }}>AI 분석 진행 중...</span>
+            </div>
+            <ProgressBar label={label} progress={progress} color={color} />
+            <p className="text-[10px]" style={{ color: "var(--muted)" }}>약 30초~1분 소요됩니다</p>
+          </div>
+        )}
+
+        {/* ERROR 상태 */}
+        {state === "error" && (
+          <div className="p-4">
+            <div className="rounded-lg p-3 mb-3" style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)" }}>
+              <p className="text-xs font-medium mb-0.5" style={{ color: "var(--error)" }}>분석 오류</p>
+              <p className="text-[10px]" style={{ color: "var(--muted)" }}>{errorMsg}</p>
+            </div>
+            <button
+              onClick={onRun}
+              className="w-full py-2 rounded-lg text-xs font-medium"
+              style={{ background: "var(--surface-hover)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
+            >
+              다시 시도
+            </button>
+          </div>
+        )}
+
+        {/* DONE 상태: 결과 + 다운로드 */}
+        {state === "done" && (
+          <div>
+            {/* 액션 버튼 */}
+            <div className="px-4 pt-3 pb-2 flex gap-2">
+              <button
+                onClick={onDownload}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all"
+                style={{ background: color, color: "#fff" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                <Icons.Download />
+                Word 다운로드
+              </button>
+              <button
+                onClick={onReset}
+                className="px-3 py-2 rounded-lg text-xs transition-all"
+                style={{ background: "var(--surface-hover)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
+              >
+                재분석
+              </button>
+            </div>
+
+            {/* 결과 본문 */}
+            <div
+              className="px-4 pb-4 pt-2 text-sm leading-relaxed max-h-96 overflow-y-auto"
+              style={{ color: "var(--text-secondary)", scrollbarWidth: "thin" }}
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(result) }}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── 참여자 상세 & 분석 화면 ──
+function ParticipantDetail({ response, onBack, gasUrl }) {
+  // 오늘은 상태
+  const [oneulState, setOneulState] = useState("idle");
+  const [oneulResult, setOneulResult] = useState("");
+  const [oneulProgress, setOneulProgress] = useState(0);
+  const [oneulError, setOneulError] = useState("");
+
+  // 자활 경로 선택 상태
+  const [selectedPath, setSelectedPath] = useState(""); // "안정형" | "도전형" | "절충형" | "custom"
+  const [customPath, setCustomPath] = useState("");
+
+  // 내일로 상태
+  const [naeirState, setNaeirState] = useState("idle");
+  const [naeirResult, setNaeirResult] = useState("");
+  const [naeirProgress, setNaeirProgress] = useState(0);
+  const [naeirError, setNaeirError] = useState("");
+
+  // 설문 응답을 텍스트로 변환
+  const formatResponseData = () => {
+    let text = `참여자 코드번호: ${response.code}\n소속: ${response.org}\n설문 응답일: ${response.timestamp}\n\n`;
+    Object.entries(response.answers).forEach(([q, a]) => {
+      const qIdx = parseInt(q);
+      const label = QUESTION_MAP[qIdx] || `질문 ${q}`;
+      text += `${label}\n→ ${a}\n\n`;
+    });
+    return text;
+  };
+
+  // Claude API 호출 (GAS 프록시 경유)
+  const callAnalysis = async (systemPrompt, userMessage) => {
+    if (!gasUrl) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(
+            systemPrompt.includes("오늘은")
+              ? `## Part 1. 심층 DNA 분석\n\n### 1. 참여자 성향 심층 프로필 (DNA)\n\n이 참여자는 내면으로 에너지를 수렴시키는 성향으로, 외부 자극보다 내적 세계의 질서와 조화를 우선하는 인지 구조를 지니고 있다. 세상을 대하는 일차적 방어기제는 '감정 차단'이다. 타인의 감정에는 깊이 공명하면서도 정작 자신의 고통에 대해서는 인식 자체를 차단하는 패턴이 반복적으로 나타난다.\n\n기저 동기는 '안전한 연결'에 대한 갈망이다. 표면적으로는 독립적이고 자족적인 모습을 유지하지만, 그 이면에는 타인에게 짐이 되지 않으면서도 깊이 연결되고 싶은 모순적 욕구가 작동하고 있다.\n\n### 2. 인생 그래프 심층 서사 (Story)\n\n참여자가 선택한 단편적 지표들은 하나의 명확한 패턴으로 수렴한다. 가족과의 정서적 교류가 삶의 정점이었고, 심신의 고통이 삶의 저점이었다는 것. 이 두 축은 우연이 아닌 인과로 연결된다.\n\n가장 힘든 시간을 '고립'으로 버텼다는 응답은 핵심적 단서이다. 이것은 단순한 회피가 아니라, 고통을 드러내면 관계가 파괴될 것이라는 무의식적 믿음 체계의 발현이다.\n\n### 3. SWOT 심리 및 역량 진단\n\n> 강점(S)\n- 타인의 감정 상태를 빠르게 포착하는 높은 정서 지능\n- 목표 설정 후 포기하지 않는 집요한 완수 역량\n\n> 약점(W)\n- 자기 감정 표현의 만성적 억제\n- 도움 요청을 자존감 훼손으로 인식하는 경직된 신념\n\n> 기회(O)\n- 안정적 환경에서의 신뢰 관계 형성 가능성\n- 섬세한 감수성을 활용한 서비스/돌봄 직무 적합성\n\n> 위협(T)\n- 장기 고립 시 감정 폭발 또는 무력감으로의 급격한 전환\n- 완벽주의적 기준으로 인한 자기 비하 사이클\n\n### 4. IAP 개인별 자립지원 계획 설계\n\n> IAP 설계 목적: 안전한 관계 경험을 통해 고립이라는 생존 기제를 점진적으로 해제하고, 정서 지능을 자활 직무 역량으로 전환하는 것\n\n- 핵심 방향성\n  - 1년차: 신뢰할 수 있는 단 한 명의 관계 구축 + 규칙적 출퇴근 안정화\n  - 2년차: 소규모 팀 협업 경험 + 직무 기술 습득\n  - 3년차: 자립 경로 확정 및 독립 준비\n\n- 직무 배치 전략\n  - 안정형: 정리 정돈, 재고 관리 등 독립적 업무\n  - 도전형: 고객 응대가 포함된 서비스 업무\n  - 절충형: 후방 지원 + 제한된 대면 업무`
+              : `### 1. 3년 자활 로드맵 및 당해 연도 분기별 계획\n\n> '고립이라는 오래된 생존 전략을 내려놓고, 안전한 연결 속에서 나만의 속도로 자립의 길을 걸어가는 3년의 여정'\n\n- [1년차 핵심 목표]: 안정적 근태 확립과 신뢰 관계 1인 형성\n  - 1분기: 주 5일 출근 루틴 정착, 담당자와 주 1회 5분 대화 시작\n  - 2분기: 직무 기초 교육 참여, 팀 내 인사 나누기 실천\n  - 3분기: 소규모 협업 과제 1회 참여, 감정 일기 주 2회 작성\n  - 4분기: 1년차 성찰 및 2년차 목표 공동 설정\n\n- [2년차 핵심 목표]: 직무 역량 강화 및 팀 내 역할 확대\n- [3년차 핵심 목표]: 자립 경로 확정 및 외부 취업/창업 준비\n\n### 2. 당월 실천 계획 및 모더레이션 지표\n\n- 당월 핵심 목표: 주 5일 출근 유지 + 담당자와 주 1회 자연스러운 대화\n- 직무 실천: 내일 출근 후 작업 공간을 10분간 정리하고, 오늘 할 일 1가지를 메모지에 적어 붙이기\n- 생활 실천: 매일 아침 창문을 열고 바깥 공기를 5분간 마시며 심호흡하기\n- 위험 통제 지표: 3일 연속 점심을 혼자 먹으면 담당자에게 먼저 말 한마디 건네기\n\n### 3. 주간 모니터링 일지 및 월말 동적 점검표\n\n- [ ] 환경 안정 (근태): 이번 주 5일 중 몇 일 출근했나요?\n- [ ] 위험 관리 (방어막 유지): 혼자 있고 싶은 충동이 3일 이상 지속되지는 않았나요?\n- [ ] 당월 실천 (루틴/목표): 아침 심호흡과 작업 공간 정리를 실천했나요?\n- 금주 상담/성찰 주제: __________________________________________________\n- 감정 상태: ( ) 긍정 / ( ) 보통 / ( ) 부정 / ( ) 에너지 고갈\n- 슈퍼바이저 월말 평가: 당월 달성도 및 차월 목표 변경안 기재`
+          );
+        }, 3000);
+      });
+    }
+
+    const res = await fetch(gasUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "analyzeWithPrompt", systemPrompt, userMessage }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "분석 실패");
+    return data.content;
+  };
+
+  // 오늘은 분석 실행
+  const runOneul = async () => {
+    setOneulState("analyzing");
+    setOneulProgress(0);
+    setOneulError("");
+    try {
+      const responseData = formatResponseData();
+      const timer = setInterval(() => setOneulProgress((p) => Math.min(p + 5, 90)), 500);
+      const result = await callAnalysis(ONEUL_PROMPT, `다음 참여자 데이터를 분석해 주십시오.\n\n${responseData}\n\n오늘은 분석해줘`);
+      clearInterval(timer);
+      setOneulProgress(100);
+      setOneulResult(result);
+      setOneulState("done");
+    } catch (err) {
+      setOneulState("error");
+      setOneulError(err.message);
+    }
+  };
+
+  // 내일로 분석 실행
+  const getSelectedPathText = () => {
+    if (selectedPath === "custom") return customPath;
+    return selectedPath;
+  };
+
+  const runNaeir = async () => {
+    setNaeirState("analyzing");
+    setNaeirProgress(0);
+    setNaeirError("");
+    try {
+      const pathText = getSelectedPathText();
+      let inputData;
+      if (oneulResult) {
+        // 오늘은 결과 + 확정 경로 포함
+        inputData = `=== 심층 분석 리포트 내용 ===\n${oneulResult}\n\n=== 확정된 자활 경로 ===\n${pathText ? `담당자가 선택한 자활 경로: '${pathText}'\n이 경로에 맞춰 3년 로드맵과 실행 계획을 설계하십시오.` : "(오늘은 분석에서 도출된 IAP 내용 기반)"}\n\n위 내용을 바탕으로 내일로 분석해줘`;
+      } else {
+        // 오늘은 없이 설문 데이터만으로 실행
+        const responseData = formatResponseData();
+        inputData = `다음 참여자 데이터를 바탕으로 실행 계획을 설계해 주십시오.\n\n${responseData}\n\n${pathText ? `담당자가 선택한 자활 경로: '${pathText}'\n이 경로에 맞춰 설계하십시오.\n\n` : ""}내일로 분석해줘`;
+      }
+      const timer = setInterval(() => setNaeirProgress((p) => Math.min(p + 5, 90)), 500);
+      const result = await callAnalysis(NAEIRO_PROMPT, inputData);
+      clearInterval(timer);
+      setNaeirProgress(100);
+      setNaeirResult(result);
+      setNaeirState("done");
+    } catch (err) {
+      setNaeirState("error");
+      setNaeirError(err.message);
+    }
+  };
+
+  // 개별 Word 다운로드
+  const downloadOneulWord = () => {
+    const report = `# 프로젝트 내일로 - 심층 DNA 분석 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n\n---\n\n${oneulResult}\n\n---\n\n> 충북청주지역자활센터 프로젝트 내일로 ${CONFIG.APP_VERSION}\n> 오늘은 프롬프트: 심층 심리 및 서사 분석`;
+    downloadAsWord(report, `오늘은_분석_${response.code}`);
+  };
+
+  const downloadNaeirWord = () => {
+    const report = `# 프로젝트 내일로 - 실행 계획 설계 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n\n---\n\n${naeirResult}\n\n---\n\n> 충북청주지역자활센터 프로젝트 내일로 ${CONFIG.APP_VERSION}\n> 내일로 프롬프트: 구체적 실행 계획 수립`;
+    downloadAsWord(report, `내일로_분석_${response.code}`);
+  };
+
+  // 통합 Word 다운로드
+  const downloadIntegratedWord = () => {
+    const report = `# 프로젝트 내일로 종합 분석 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n\n---\n\n## Part 1. 심층 DNA 분석 (오늘은)\n\n${oneulResult}\n\n---\n\n## Part 2. 실행 계획 설계 (내일로)\n\n${naeirResult}\n\n---\n\n> 본 리포트는 2개의 독립적인 AI 분석 프롬프트를 통해 생성되었습니다.\n> - 오늘은 프롬프트: 심층 심리 및 서사 분석\n> - 내일로 프롬프트: 구체적 실행 계획 수립\n>\n> 충북청주지역자활센터 프로젝트 내일로 ${CONFIG.APP_VERSION}`;
+    downloadAsWord(report, `내일로_종합리포트_${response.code}`);
+  };
+
+  const downloadAsWord = (markdown, filename) => {
+    const htmlContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="utf-8"><style>
+        body { font-family: '맑은 고딕', 'Malgun Gothic', sans-serif; font-size: 11pt; line-height: 1.8; color: #1a1a1a; }
+        h1 { font-size: 18pt; color: #1a365d; border-bottom: 2px solid #2b6cb0; padding-bottom: 8pt; margin-top: 20pt; }
+        h2 { font-size: 14pt; color: #2c5282; border-bottom: 1px solid #bee3f8; padding-bottom: 6pt; margin-top: 16pt; }
+        h3 { font-size: 12pt; color: #2d3748; margin-top: 12pt; }
+        blockquote { border-left: 3px solid #4299e1; padding-left: 12pt; color: #4a5568; font-style: italic; margin: 8pt 0; }
+        hr { border: none; border-top: 1px solid #e2e8f0; margin: 16pt 0; }
+      </style></head>
+      <body>${renderMarkdown(markdown)}</body></html>`;
+    const blob = new Blob(["\ufeff", htmlContent], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${filename}_${new Date().toISOString().split("T")[0]}.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const bothDone = oneulState === "done" && naeirState === "done";
+
+  return (
+    <div>
+      {/* 헤더 */}
+      <div className="flex items-center gap-3 mb-5">
+        <button
+          onClick={onBack}
+          className="p-2 rounded-lg transition-colors"
+          style={{ color: "var(--text-secondary)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-hover)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+        >
+          <Icons.Back />
+        </button>
+        <div className="flex-1">
+          <h2 className="text-lg font-bold" style={{ color: "var(--heading)" }}>{response.code}</h2>
+          <p className="text-xs" style={{ color: "var(--muted)" }}>{response.org} &middot; {response.timestamp}</p>
+        </div>
+        {/* 분석 상태 뱃지 */}
+        <div className="flex gap-1">
+          {oneulState === "done" && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(167,139,250,0.12)", color: "var(--oneul)" }}>오늘은</span>
+          )}
+          {naeirState === "done" && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(52,211,153,0.12)", color: "var(--naeiro)" }}>내일로</span>
+          )}
+        </div>
+      </div>
+
+      {/* 설문 응답 요약 (접이식) */}
+      <details className="rounded-xl mb-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <summary className="px-4 py-3 text-sm font-semibold cursor-pointer select-none" style={{ color: "var(--text-secondary)" }}>
+          설문 응답 요약 (17문항)
+        </summary>
+        <div className="px-4 pb-3 space-y-2 max-h-48 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+          {Object.entries(response.answers).map(([q, a]) => {
+            const qIdx = parseInt(q);
+            return (
+              <div key={q} className="text-xs">
+                <span style={{ color: "var(--accent)" }}>{QUESTION_MAP[qIdx]?.split(".")[0]}.</span>{" "}
+                <span style={{ color: "var(--text-secondary)" }}>{a.length > 60 ? a.slice(0, 60) + "..." : a}</span>
+              </div>
+            );
+          })}
+        </div>
+      </details>
+
+      {/* ── 다운로드 센터 (둘 다 완료 시) ── */}
+      {bothDone && (
+        <DownloadCenter
+          response={response}
+          oneulResult={oneulResult}
+          naeirResult={naeirResult}
+          selectedPath={selectedPath === "custom" ? customPath : selectedPath}
+          gasUrl={gasUrl}
+          downloadAsWord={downloadAsWord}
+        />
+      )}
+
+      {/* 오늘은 분석 카드 */}
+      <div className="mb-3">
+        <AnalysisCard
+          type="oneul"
+          label="오늘은"
+          subtitle="심층 DNA 분석"
+          color="var(--oneul)"
+          colorSoft="rgba(167,139,250,0.06)"
+          result={oneulResult}
+          state={oneulState}
+          progress={oneulProgress}
+          errorMsg={oneulError}
+          onRun={runOneul}
+          onReset={() => { setOneulState("idle"); setOneulResult(""); setSelectedPath(""); setCustomPath(""); }}
+          onDownload={downloadOneulWord}
+          disabled={false}
+          disabledReason=""
+        />
+      </div>
+
+      {/* ── 자활 경로 선택 UI (오늘은 완료 후 표시) ── */}
+      {oneulState === "done" && naeirState !== "done" && (
+        <div className="mb-3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+          {/* 헤더 */}
+          <div className="px-4 py-3 flex items-center gap-2.5" style={{ background: "rgba(91,141,239,0.06)", borderBottom: "1px solid var(--border)" }}>
+            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4" style={{ color: "var(--accent)" }}>
+              <path d="M10 2L3 7v6l7 5 7-5V7l-7-5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+              <path d="M10 12V8m0 0L7 10m3-2l3 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div>
+              <span className="text-xs font-bold" style={{ color: "var(--accent)" }}>자활 경로 선택</span>
+              <span className="text-[10px] ml-2" style={{ color: "var(--muted)" }}>내일로 분석에 반영됩니다</span>
+            </div>
+          </div>
+
+          <div className="p-4" style={{ background: "var(--surface)" }}>
+            <p className="text-xs mb-3" style={{ color: "var(--text-secondary)" }}>
+              오늘은 분석에서 도출된 직무 배치 전략 중 참여자에게 적합한 경로를 선택해 주세요.
+            </p>
+
+            {/* 3가지 기본 경로 */}
+            <div className="space-y-2 mb-3">
+              {[
+                { value: "안정형", icon: "🛡", desc: "정리 정돈, 재고 관리 등 독립적 업무 중심" },
+                { value: "도전형", icon: "🚀", desc: "고객 응대, 신규 업무 도전 중심" },
+                { value: "절충형", icon: "⚖", desc: "후방 지원 + 제한된 대면 업무 혼합" },
+              ].map((path) => (
+                <button
+                  key={path.value}
+                  onClick={() => { setSelectedPath(path.value); setCustomPath(""); }}
+                  className="w-full text-left p-3 rounded-lg transition-all duration-150 flex items-start gap-3"
+                  style={{
+                    background: selectedPath === path.value ? "var(--accent-soft)" : "var(--bg)",
+                    border: `1px solid ${selectedPath === path.value ? "var(--accent)" : "var(--border)"}`,
+                  }}
+                >
+                  <span className="text-base mt-0.5">{path.icon}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold" style={{ color: selectedPath === path.value ? "var(--accent)" : "var(--text)" }}>
+                        {path.value}
+                      </span>
+                      {selectedPath === path.value && (
+                        <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" style={{ color: "var(--accent)" }}>
+                          <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                        </svg>
+                      )}
+                    </div>
+                    <p className="text-[10px] mt-0.5" style={{ color: "var(--muted)" }}>{path.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* 기타 직접 입력 */}
+            <div>
+              <button
+                onClick={() => setSelectedPath("custom")}
+                className="w-full text-left p-3 rounded-lg transition-all duration-150"
+                style={{
+                  background: selectedPath === "custom" ? "var(--accent-soft)" : "var(--bg)",
+                  border: `1px solid ${selectedPath === "custom" ? "var(--accent)" : "var(--border)"}`,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-base">✏️</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold" style={{ color: selectedPath === "custom" ? "var(--accent)" : "var(--text)" }}>
+                      기타 (직접 입력)
+                    </span>
+                    {selectedPath === "custom" && (
+                      <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" style={{ color: "var(--accent)" }}>
+                        <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.5" />
+                        <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              {selectedPath === "custom" && (
+                <div className="mt-2">
+                  <textarea
+                    value={customPath}
+                    onChange={(e) => setCustomPath(e.target.value)}
+                    placeholder="예: 카페 바리스타 직무 배치, 참여자 본인이 희망하는 요리 관련 직종 탐색 병행..."
+                    rows={3}
+                    className="w-full px-3 py-2.5 rounded-lg text-xs outline-none resize-none"
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--accent-border)",
+                      color: "var(--text)",
+                    }}
+                  />
+                  <p className="text-[10px] mt-1" style={{ color: "var(--muted)" }}>
+                    구체적으로 작성할수록 더 정밀한 실행 계획이 설계됩니다
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* 선택 상태 표시 */}
+            {selectedPath && (
+              <div className="mt-3 px-3 py-2 rounded-lg flex items-center gap-2" style={{ background: "rgba(91,141,239,0.05)", border: "1px solid rgba(91,141,239,0.1)" }}>
+                <span className="text-[10px]" style={{ color: "var(--accent)" }}>선택된 경로:</span>
+                <span className="text-[10px] font-semibold" style={{ color: "var(--text)" }}>
+                  {selectedPath === "custom" ? (customPath || "(입력 대기중)") : selectedPath}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 내일로 분석 카드 */}
+      <div className="mb-3">
+        <AnalysisCard
+          type="naeir"
+          label="내일로"
+          subtitle="실행 계획 설계"
+          color="var(--naeiro)"
+          colorSoft="rgba(52,211,153,0.06)"
+          result={naeirResult}
+          state={naeirState}
+          progress={naeirProgress}
+          errorMsg={naeirError}
+          onRun={runNaeir}
+          onReset={() => { setNaeirState("idle"); setNaeirResult(""); }}
+          onDownload={downloadNaeirWord}
+          disabled={false}
+          disabledReason=""
+        />
+      </div>
+
+      {/* 안내 메시지 */}
+      {oneulState === "done" && naeirState === "idle" && !selectedPath && (
+        <div className="rounded-lg p-3 flex items-start gap-2" style={{ background: "rgba(91,141,239,0.05)", border: "1px solid rgba(91,141,239,0.12)" }}>
+          <span className="text-sm mt-0.5">☝️</span>
+          <p className="text-xs" style={{ color: "var(--accent)" }}>
+            오늘은 분석이 완료되었습니다. 위에서 자활 경로를 선택한 후 내일로 분석을 실행하면, 해당 경로에 맞춘 정밀한 실행 계획이 설계됩니다.
+          </p>
+        </div>
+      )}
+      {oneulState === "done" && naeirState === "idle" && selectedPath && (
+        <div className="rounded-lg p-3 flex items-start gap-2" style={{ background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.12)" }}>
+          <span className="text-sm mt-0.5">✅</span>
+          <p className="text-xs" style={{ color: "var(--naeiro)" }}>
+            '{selectedPath === "custom" ? (customPath || "기타") : selectedPath}' 경로가 선택되었습니다. 내일로 분석 시작 버튼을 눌러주세요.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 설정 모달 ──
+function SettingsModal({ show, onClose, gasUrl, setGasUrl }) {
+  const [tempUrl, setTempUrl] = useState(gasUrl);
+
+  if (!show) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }}>
+      <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <h3 className="text-base font-bold mb-4" style={{ color: "var(--heading)" }}>
+          시스템 설정
+        </h3>
+
+        <div className="mb-4">
+          <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+            GAS 프록시 URL
+          </label>
+          <input
+            type="text"
+            value={tempUrl}
+            onChange={(e) => setTempUrl(e.target.value)}
+            placeholder="https://script.google.com/macros/s/.../exec"
+            className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+            style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
+          />
+          <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+            미입력 시 데모 모드로 동작합니다
+          </p>
+        </div>
+
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-xs"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            취소
+          </button>
+          <button
+            onClick={() => {
+              setGasUrl(tempUrl);
+              onClose();
+            }}
+            className="px-4 py-2 rounded-lg text-xs font-medium"
+            style={{ background: "var(--accent)", color: "#fff" }}
+          >
+            저장
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 메인 앱 ──
+function App() {
+  const [user, setUser] = useState(null);
+  const [responses, setResponses] = useState(DEMO_RESPONSES);
+  const [selectedResponse, setSelectedResponse] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const [gasUrl, setGasUrl] = useState(CONFIG.GAS_PROXY_URL);
+
+  return (
+    <>
+      <style>{cssVars}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-body); }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        input::placeholder { color: var(--muted); }
+      `}</style>
+
+      <div className="min-h-screen" style={{ background: "var(--bg)", color: "var(--text)", fontFamily: "var(--font-body)" }}>
+        {!user ? (
+          <LoginScreen onLogin={setUser} />
+        ) : (
+          <div className="max-w-lg mx-auto min-h-screen flex flex-col">
+            {/* 상단 네비게이션 */}
+            <header
+              className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between"
+              style={{
+                background: "rgba(12,14,18,0.85)",
+                backdropFilter: "blur(12px)",
+                borderBottom: "1px solid var(--border-light)",
+              }}
+            >
+              <div className="flex items-center gap-2.5">
+                <div style={{ color: "var(--accent)" }}>
+                  <Icons.Logo />
+                </div>
+                <div>
+                  <h1 className="text-sm font-bold tracking-tight" style={{ color: "var(--heading)" }}>
+                    프로젝트 내일로
+                  </h1>
+                  <p className="text-[10px]" style={{ color: "var(--muted)" }}>
+                    AI 참여자 분석 시스템
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className="p-2 rounded-lg text-xs"
+                  style={{ color: "var(--muted)" }}
+                >
+                  ⚙
+                </button>
+                <button
+                  onClick={() => setUser(null)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
+                  style={{ color: "var(--muted)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <Icons.Logout />
+                  <span>{user.name}</span>
+                </button>
+              </div>
+            </header>
+
+            {/* 메인 콘텐츠 */}
+            <main className="flex-1 p-4">
+              {/* 데모 모드 알림 */}
+              {!gasUrl && (
+                <div
+                  className="rounded-xl p-3 mb-4 flex items-start gap-2"
+                  style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.15)" }}
+                >
+                  <span className="text-sm mt-0.5">⚡</span>
+                  <div>
+                    <p className="text-xs font-medium" style={{ color: "var(--warning)" }}>
+                      데모 모드
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                      GAS 프록시 URL이 미설정되어 샘플 데이터로 동작합니다. 설정에서 URL을 입력하세요.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {selectedResponse ? (
+                <ParticipantDetail
+                  response={selectedResponse}
+                  onBack={() => setSelectedResponse(null)}
+                  gasUrl={gasUrl}
+                />
+              ) : (
+                <ResponseList
+                  responses={responses}
+                  onSelect={setSelectedResponse}
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                />
+              )}
+            </main>
+
+            {/* 하단 정보 */}
+            <footer className="p-4 text-center">
+              <p className="text-[10px]" style={{ color: "var(--muted)" }}>
+                충북청주지역자활센터 &middot; 프로젝트 내일로 {CONFIG.APP_VERSION}
+              </p>
+            </footer>
+          </div>
+        )}
+      </div>
+
+      {/* 설정 모달 */}
+      <SettingsModal show={showSettings} onClose={() => setShowSettings(false)} gasUrl={gasUrl} setGasUrl={setGasUrl} />
+    </>
+  );
+}
+
+// ── 앱 렌더링 ──
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(React.createElement(App));
+</script>
+</body>
+</html>
