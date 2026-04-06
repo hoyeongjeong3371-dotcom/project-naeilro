@@ -36,7 +36,10 @@ const CONFIG = {
   GAS_PROXY_URL: "https://script.google.com/macros/s/AKfycbzF4dZjWUO6lZ2kgmsT58j-Jd8-y9StnY5tbBHuf7JCXrNfqPY2IVq_NMnQZViRkPxXXQ/exec",
   GOOGLE_CLIENT_ID: "", // Google OAuth Client ID 입력
   SPREADSHEET_ID: "1AGYpsLKhygVAk5-k0oNW-Rv2bI6_YElqYF__tp6y5nk",
-  APP_VERSION: "v2.0",
+  GEMINI_API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+  CLAUDE_API_URL: "https://api.anthropic.com/v1/messages",
+  CLAUDE_MODEL: "claude-sonnet-4-20250514",
+  APP_VERSION: "v2.1",
 };
 
 // ── 설문지 17문항 매핑 ──
@@ -719,7 +722,7 @@ function AnalysisCard({ type, label, subtitle, color, colorSoft, result, state, 
 }
 
 // ── 참여자 상세 & 분석 화면 ──
-function ParticipantDetail({ response, onBack, gasUrl }) {
+function ParticipantDetail({ response, onBack, gasUrl, geminiKey, claudeKey }) {
   // 오늘은 상태
   const [oneulState, setOneulState] = useState("idle");
   const [oneulResult, setOneulResult] = useState("");
@@ -747,28 +750,74 @@ function ParticipantDetail({ response, onBack, gasUrl }) {
     return text;
   };
 
-  // Claude API 호출 (GAS 프록시 경유)
-  const callAnalysis = async (systemPrompt, userMessage) => {
-    if (!gasUrl) {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(
-            systemPrompt.includes("오늘은")
-              ? `## Part 1. 심층 DNA 분석\n\n### 1. 참여자 성향 심층 프로필 (DNA)\n\n이 참여자는 내면으로 에너지를 수렴시키는 성향으로, 외부 자극보다 내적 세계의 질서와 조화를 우선하는 인지 구조를 지니고 있다. 세상을 대하는 일차적 방어기제는 '감정 차단'이다. 타인의 감정에는 깊이 공명하면서도 정작 자신의 고통에 대해서는 인식 자체를 차단하는 패턴이 반복적으로 나타난다.\n\n기저 동기는 '안전한 연결'에 대한 갈망이다. 표면적으로는 독립적이고 자족적인 모습을 유지하지만, 그 이면에는 타인에게 짐이 되지 않으면서도 깊이 연결되고 싶은 모순적 욕구가 작동하고 있다.\n\n### 2. 인생 그래프 심층 서사 (Story)\n\n참여자가 선택한 단편적 지표들은 하나의 명확한 패턴으로 수렴한다. 가족과의 정서적 교류가 삶의 정점이었고, 심신의 고통이 삶의 저점이었다는 것. 이 두 축은 우연이 아닌 인과로 연결된다.\n\n가장 힘든 시간을 '고립'으로 버텼다는 응답은 핵심적 단서이다. 이것은 단순한 회피가 아니라, 고통을 드러내면 관계가 파괴될 것이라는 무의식적 믿음 체계의 발현이다.\n\n### 3. SWOT 심리 및 역량 진단\n\n> 강점(S)\n- 타인의 감정 상태를 빠르게 포착하는 높은 정서 지능\n- 목표 설정 후 포기하지 않는 집요한 완수 역량\n\n> 약점(W)\n- 자기 감정 표현의 만성적 억제\n- 도움 요청을 자존감 훼손으로 인식하는 경직된 신념\n\n> 기회(O)\n- 안정적 환경에서의 신뢰 관계 형성 가능성\n- 섬세한 감수성을 활용한 서비스/돌봄 직무 적합성\n\n> 위협(T)\n- 장기 고립 시 감정 폭발 또는 무력감으로의 급격한 전환\n- 완벽주의적 기준으로 인한 자기 비하 사이클\n\n### 4. IAP 개인별 자립지원 계획 설계\n\n> IAP 설계 목적: 안전한 관계 경험을 통해 고립이라는 생존 기제를 점진적으로 해제하고, 정서 지능을 자활 직무 역량으로 전환하는 것\n\n- 핵심 방향성\n  - 1년차: 신뢰할 수 있는 단 한 명의 관계 구축 + 규칙적 출퇴근 안정화\n  - 2년차: 소규모 팀 협업 경험 + 직무 기술 습득\n  - 3년차: 자립 경로 확정 및 독립 준비\n\n- 직무 배치 전략\n  - 안정형: 정리 정돈, 재고 관리 등 독립적 업무\n  - 도전형: 고객 응대가 포함된 서비스 업무\n  - 절충형: 후방 지원 + 제한된 대면 업무`
-              : `### 1. 3년 자활 로드맵 및 당해 연도 분기별 계획\n\n> '고립이라는 오래된 생존 전략을 내려놓고, 안전한 연결 속에서 나만의 속도로 자립의 길을 걸어가는 3년의 여정'\n\n- [1년차 핵심 목표]: 안정적 근태 확립과 신뢰 관계 1인 형성\n  - 1분기: 주 5일 출근 루틴 정착, 담당자와 주 1회 5분 대화 시작\n  - 2분기: 직무 기초 교육 참여, 팀 내 인사 나누기 실천\n  - 3분기: 소규모 협업 과제 1회 참여, 감정 일기 주 2회 작성\n  - 4분기: 1년차 성찰 및 2년차 목표 공동 설정\n\n- [2년차 핵심 목표]: 직무 역량 강화 및 팀 내 역할 확대\n- [3년차 핵심 목표]: 자립 경로 확정 및 외부 취업/창업 준비\n\n### 2. 당월 실천 계획 및 모더레이션 지표\n\n- 당월 핵심 목표: 주 5일 출근 유지 + 담당자와 주 1회 자연스러운 대화\n- 직무 실천: 내일 출근 후 작업 공간을 10분간 정리하고, 오늘 할 일 1가지를 메모지에 적어 붙이기\n- 생활 실천: 매일 아침 창문을 열고 바깥 공기를 5분간 마시며 심호흡하기\n- 위험 통제 지표: 3일 연속 점심을 혼자 먹으면 담당자에게 먼저 말 한마디 건네기\n\n### 3. 주간 모니터링 일지 및 월말 동적 점검표\n\n- [ ] 환경 안정 (근태): 이번 주 5일 중 몇 일 출근했나요?\n- [ ] 위험 관리 (방어막 유지): 혼자 있고 싶은 충동이 3일 이상 지속되지는 않았나요?\n- [ ] 당월 실천 (루틴/목표): 아침 심호흡과 작업 공간 정리를 실천했나요?\n- 금주 상담/성찰 주제: __________________________________________________\n- 감정 상태: ( ) 긍정 / ( ) 보통 / ( ) 부정 / ( ) 에너지 고갈\n- 슈퍼바이저 월말 평가: 당월 달성도 및 차월 목표 변경안 기재`
-          );
-        }, 3000);
-      });
+  // 데모 응답 반환
+  const getDemoResponse = (type) => {
+    return type === "oneul"
+      ? `## Part 1. 심층 DNA 분석\n\n### 1. 참여자 성향 심층 프로필 (DNA)\n\n이 참여자는 내면으로 에너지를 수렴시키는 성향으로, 외부 자극보다 내적 세계의 질서와 조화를 우선하는 인지 구조를 지니고 있다. 세상을 대하는 일차적 방어기제는 '감정 차단'이다. 타인의 감정에는 깊이 공명하면서도 정작 자신의 고통에 대해서는 인식 자체를 차단하는 패턴이 반복적으로 나타난다.\n\n기저 동기는 '안전한 연결'에 대한 갈망이다. 표면적으로는 독립적이고 자족적인 모습을 유지하지만, 그 이면에는 타인에게 짐이 되지 않으면서도 깊이 연결되고 싶은 모순적 욕구가 작동하고 있다.\n\n### 2. 인생 그래프 심층 서사 (Story)\n\n참여자가 선택한 단편적 지표들은 하나의 명확한 패턴으로 수렴한다. 가족과의 정서적 교류가 삶의 정점이었고, 심신의 고통이 삶의 저점이었다는 것. 이 두 축은 우연이 아닌 인과로 연결된다.\n\n가장 힘든 시간을 '고립'으로 버텼다는 응답은 핵심적 단서이다. 이것은 단순한 회피가 아니라, 고통을 드러내면 관계가 파괴될 것이라는 무의식적 믿음 체계의 발현이다.\n\n### 3. SWOT 심리 및 역량 진단\n\n> 강점(S)\n- 타인의 감정 상태를 빠르게 포착하는 높은 정서 지능\n- 목표 설정 후 포기하지 않는 집요한 완수 역량\n\n> 약점(W)\n- 자기 감정 표현의 만성적 억제\n- 도움 요청을 자존감 훼손으로 인식하는 경직된 신념\n\n> 기회(O)\n- 안정적 환경에서의 신뢰 관계 형성 가능성\n- 섬세한 감수성을 활용한 서비스/돌봄 직무 적합성\n\n> 위협(T)\n- 장기 고립 시 감정 폭발 또는 무력감으로의 급격한 전환\n- 완벽주의적 기준으로 인한 자기 비하 사이클\n\n### 4. IAP 개인별 자립지원 계획 설계\n\n> IAP 설계 목적: 안전한 관계 경험을 통해 고립이라는 생존 기제를 점진적으로 해제하고, 정서 지능을 자활 직무 역량으로 전환하는 것\n\n- 핵심 방향성\n  - 1년차: 신뢰할 수 있는 단 한 명의 관계 구축 + 규칙적 출퇴근 안정화\n  - 2년차: 소규모 팀 협업 경험 + 직무 기술 습득\n  - 3년차: 자립 경로 확정 및 독립 준비\n\n- 직무 배치 전략\n  - 안정형: 정리 정돈, 재고 관리 등 독립적 업무\n  - 도전형: 고객 응대가 포함된 서비스 업무\n  - 절충형: 후방 지원 + 제한된 대면 업무`
+      : `### 1. 3년 자활 로드맵 및 당해 연도 분기별 계획\n\n> '고립이라는 오래된 생존 전략을 내려놓고, 안전한 연결 속에서 나만의 속도로 자립의 길을 걸어가는 3년의 여정'\n\n- [1년차 핵심 목표]: 안정적 근태 확립과 신뢰 관계 1인 형성\n  - 1분기: 주 5일 출근 루틴 정착, 담당자와 주 1회 5분 대화 시작\n  - 2분기: 직무 기초 교육 참여, 팀 내 인사 나누기 실천\n  - 3분기: 소규모 협업 과제 1회 참여, 감정 일기 주 2회 작성\n  - 4분기: 1년차 성찰 및 2년차 목표 공동 설정\n\n- [2년차 핵심 목표]: 직무 역량 강화 및 팀 내 역할 확대\n- [3년차 핵심 목표]: 자립 경로 확정 및 외부 취업/창업 준비\n\n### 2. 당월 실천 계획 및 모더레이션 지표\n\n- 당월 핵심 목표: 주 5일 출근 유지 + 담당자와 주 1회 자연스러운 대화\n- 직무 실천: 내일 출근 후 작업 공간을 10분간 정리하고, 오늘 할 일 1가지를 메모지에 적어 붙이기\n- 생활 실천: 매일 아침 창문을 열고 바깥 공기를 5분간 마시며 심호흡하기\n- 위험 통제 지표: 3일 연속 점심을 혼자 먹으면 담당자에게 먼저 말 한마디 건네기\n\n### 3. 주간 모니터링 일지 및 월말 동적 점검표\n\n- [ ] 환경 안정 (근태): 이번 주 5일 중 몇 일 출근했나요?\n- [ ] 위험 관리 (방어막 유지): 혼자 있고 싶은 충동이 3일 이상 지속되지는 않았나요?\n- [ ] 당월 실천 (루틴/목표): 아침 심호흡과 작업 공간 정리를 실천했나요?\n- 금주 상담/성찰 주제: __________________________________________________\n- 감정 상태: ( ) 긍정 / ( ) 보통 / ( ) 부정 / ( ) 에너지 고갈\n- 슈퍼바이저 월말 평가: 당월 달성도 및 차월 목표 변경안 기재`;
+  };
+
+  // Google Gemini API 호출 (오늘은 분석용)
+  const callGemini = async (systemPrompt, userMessage) => {
+    if (!geminiKey) {
+      return new Promise((resolve) => setTimeout(() => resolve(getDemoResponse("oneul")), 3000));
     }
 
-    const res = await fetch(gasUrl, {
+    const res = await fetch(`${CONFIG.GEMINI_API_URL}?key=${geminiKey}`, {
       method: "POST",
-      redirect: "follow",
-      body: JSON.stringify({ action: "analyzeWithPrompt", systemPrompt, userMessage }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: "user", parts: [{ text: userMessage }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 8192,
+        },
+      }),
     });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `Gemini API 오류 (${res.status})`);
+    }
+
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || "분석 실패");
-    return data.content;
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Gemini API에서 응답을 받지 못했습니다");
+    return text;
+  };
+
+  // Claude API 호출 (내일로 분석용)
+  const callClaude = async (systemPrompt, userMessage) => {
+    if (!claudeKey) {
+      return new Promise((resolve) => setTimeout(() => resolve(getDemoResponse("naeir")), 3000));
+    }
+
+    const res = await fetch(CONFIG.CLAUDE_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": claudeKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model: CONFIG.CLAUDE_MODEL,
+        max_tokens: 8192,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userMessage }],
+      }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `Claude API 오류 (${res.status})`);
+    }
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text;
+    if (!text) throw new Error("Claude API에서 응답을 받지 못했습니다");
+    return text;
   };
 
   // 오늘은 분석 실행
@@ -779,7 +828,7 @@ function ParticipantDetail({ response, onBack, gasUrl }) {
     try {
       const responseData = formatResponseData();
       const timer = setInterval(() => setOneulProgress((p) => Math.min(p + 5, 90)), 500);
-      const result = await callAnalysis(ONEUL_PROMPT, `다음 참여자 데이터를 분석해 주십시오.\n\n${responseData}\n\n오늘은 분석해줘`);
+      const result = await callGemini(ONEUL_PROMPT, `다음 참여자 데이터를 분석해 주십시오.\n\n${responseData}\n\n오늘은 분석해줘`);
       clearInterval(timer);
       setOneulProgress(100);
       setOneulResult(result);
@@ -812,7 +861,7 @@ function ParticipantDetail({ response, onBack, gasUrl }) {
         inputData = `다음 참여자 데이터를 바탕으로 실행 계획을 설계해 주십시오.\n\n${responseData}\n\n${pathText ? `담당자가 선택한 자활 경로: '${pathText}'\n이 경로에 맞춰 설계하십시오.\n\n` : ""}내일로 분석해줘`;
       }
       const timer = setInterval(() => setNaeirProgress((p) => Math.min(p + 5, 90)), 500);
-      const result = await callAnalysis(NAEIRO_PROMPT, inputData);
+      const result = await callClaude(NAEIRO_PROMPT, inputData);
       clearInterval(timer);
       setNaeirProgress(100);
       setNaeirResult(result);
@@ -1097,53 +1146,150 @@ function ParticipantDetail({ response, onBack, gasUrl }) {
 }
 
 // ── 설정 모달 ──
-function SettingsModal({ show, onClose, gasUrl, setGasUrl }) {
+function SettingsModal({ show, onClose, gasUrl, setGasUrl, geminiKey, setGeminiKey, claudeKey, setClaudeKey }) {
   const [tempUrl, setTempUrl] = useState(gasUrl);
+  const [tempGeminiKey, setTempGeminiKey] = useState(geminiKey);
+  const [tempClaudeKey, setTempClaudeKey] = useState(claudeKey);
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showClaudeKey, setShowClaudeKey] = useState(false);
 
   if (!show) return null;
 
+  const ApiKeyField = ({ label, color, icon, value, onChange, showKey, toggleShow, placeholder, description }) => (
+    <div className="mb-4">
+      <div className="flex items-center gap-2 mb-1.5">
+        <div className="w-2 h-2 rounded-full" style={{ background: color }} />
+        <label className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+          {label}
+        </label>
+        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: color + "1A", color }}>{icon}</span>
+      </div>
+      <div className="relative">
+        <input
+          type={showKey ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className="w-full px-3 py-2 pr-16 rounded-lg text-xs outline-none"
+          style={{ background: "var(--bg)", border: `1px solid ${value ? color + "44" : "var(--border)"}`, color: "var(--text)" }}
+        />
+        <button
+          onClick={toggleShow}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] px-2 py-0.5 rounded"
+          style={{ color: "var(--muted)", background: "var(--surface-active)" }}
+        >
+          {showKey ? "숨기기" : "보기"}
+        </button>
+      </div>
+      <p className="text-[10px] mt-1" style={{ color: "var(--muted)" }}>{description}</p>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }}>
-      <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <h3 className="text-base font-bold mb-4" style={{ color: "var(--heading)" }}>
-          시스템 설정
-        </h3>
-
-        <div className="mb-4">
-          <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-            GAS 프록시 URL
-          </label>
-          <input
-            type="text"
-            value={tempUrl}
-            onChange={(e) => setTempUrl(e.target.value)}
-            placeholder="https://script.google.com/macros/s/.../exec"
-            className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-            style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
-          />
-          <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
-            미입력 시 데모 모드로 동작합니다
-          </p>
+      <div className="w-full max-w-md rounded-2xl overflow-hidden" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        {/* 헤더 */}
+        <div className="px-6 pt-5 pb-3">
+          <h3 className="text-base font-bold" style={{ color: "var(--heading)" }}>시스템 설��</h3>
+          <p className="text-[10px] mt-1" style={{ color: "var(--muted)" }}>각 분석 엔진의 API Key를 설정합니다</p>
         </div>
 
-        <div className="flex gap-2 justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg text-xs"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            취소
-          </button>
-          <button
-            onClick={() => {
-              setGasUrl(tempUrl);
-              onClose();
-            }}
-            className="px-4 py-2 rounded-lg text-xs font-medium"
-            style={{ background: "var(--accent)", color: "#fff" }}
-          >
-            저장
-          </button>
+        {/* AI 엔진 설정 영역 */}
+        <div className="px-6 pb-2">
+          <div className="rounded-xl p-3 mb-3" style={{ background: "var(--bg)", border: "1px solid var(--border-light)" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs">🔮</span>
+              <span className="text-[10px] font-bold" style={{ color: "var(--text-secondary)" }}>AI 분석 엔진 구성</span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[10px]">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--oneul)" }} />
+                <span style={{ color: "var(--oneul)" }}>오늘은</span>
+                <span style={{ color: "var(--muted)" }}>심층 DNA 분��</span>
+                <span className="ml-auto px-1.5 py-0.5 rounded" style={{ background: "rgba(167,139,250,0.1)", color: "var(--oneul)" }}>Google Gemini</span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px]">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--naeiro)" }} />
+                <span style={{ color: "var(--naeiro)" }}>내일로</span>
+                <span style={{ color: "var(--muted)" }}>실행 계획 설계</span>
+                <span className="ml-auto px-1.5 py-0.5 rounded" style={{ background: "rgba(52,211,153,0.1)", color: "var(--naeiro)" }}>Claude AI</span>
+              </div>
+            </div>
+          </div>
+
+          <ApiKeyField
+            label="Google Gemini API Key"
+            color="var(--oneul)"
+            icon="오늘은"
+            value={tempGeminiKey}
+            onChange={(e) => setTempGeminiKey(e.target.value)}
+            showKey={showGeminiKey}
+            toggleShow={() => setShowGeminiKey(!showGeminiKey)}
+            placeholder="AIzaSy..."
+            description="오늘은 분석에 사용 · Google AI Studio에서 발급"
+          />
+
+          <ApiKeyField
+            label="Claude API Key"
+            color="var(--naeiro)"
+            icon="��일로"
+            value={tempClaudeKey}
+            onChange={(e) => setTempClaudeKey(e.target.value)}
+            showKey={showClaudeKey}
+            toggleShow={() => setShowClaudeKey(!showClaudeKey)}
+            placeholder="sk-ant-..."
+            description="내일로 분석에 사용 · Anthropic Console에서 발급"
+          />
+
+          <div className="mb-4">
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
+              GAS 프록시 URL
+            </label>
+            <input
+              type="text"
+              value={tempUrl}
+              onChange={(e) => setTempUrl(e.target.value)}
+              placeholder="https://script.google.com/macros/s/.../exec"
+              className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
+            />
+            <p className="text-[10px] mt-1" style={{ color: "var(--muted)" }}>
+              설문 응답 조회 및 문서 생성에 사용
+            </p>
+          </div>
+        </div>
+
+        {/* 상태 표시 + 저장 버튼 */}
+        <div className="px-6 pb-5">
+          <div className="flex items-center gap-2 mb-3 text-[10px]" style={{ color: "var(--muted)" }}>
+            <span>{tempGeminiKey ? "🟢" : "🔴"} Gemini</span>
+            <span>{tempClaudeKey ? "🟢" : "🔴"} Claude</span>
+            <span>{tempUrl ? "🟢" : "🔴"} GAS</span>
+            <span className="ml-auto">미설정 항목은 데모 모드</span>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-xs"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              취소
+            </button>
+            <button
+              onClick={() => {
+                setGasUrl(tempUrl);
+                setGeminiKey(tempGeminiKey);
+                setClaudeKey(tempClaudeKey);
+                localStorage.setItem("naeilro_gemini_key", tempGeminiKey);
+                localStorage.setItem("naeilro_claude_key", tempClaudeKey);
+                onClose();
+              }}
+              className="px-5 py-2 rounded-lg text-xs font-medium"
+              style={{ background: "var(--accent)", color: "#fff" }}
+            >
+              저장
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1158,6 +1304,8 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [gasUrl, setGasUrl] = useState(CONFIG.GAS_PROXY_URL);
+  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem("naeilro_gemini_key") || "");
+  const [claudeKey, setClaudeKey] = useState(() => localStorage.getItem("naeilro_claude_key") || "");
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
 
@@ -1263,16 +1411,21 @@ function App() {
             {/* 메인 콘텐츠 */}
             <main className="flex-1 p-4">
               {/* 데모 모드 알림 */}
-              {!gasUrl && (
+              {(!gasUrl || !geminiKey || !claudeKey) && (
                 <div
                   className="rounded-xl p-3 mb-4 flex items-start gap-2"
                   style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.15)" }}
                 >
                   <span className="text-sm mt-0.5">⚡</span>
                   <div>
-                    <p className="text-xs font-medium" style={{ color: "var(--warning)" }}>데모 모드</p>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-                      GAS 프록시 URL이 미설정되어 샘플 데이터로 동작합니다. 설정에서 URL을 입력하세요.
+                    <p className="text-xs font-medium" style={{ color: "var(--warning)" }}>
+                      {!geminiKey && !claudeKey && !gasUrl ? "데모 모드" : "일부 데모 모드"}
+                    </p>
+                    <p className="text-xs mt-0.5 space-y-0.5" style={{ color: "var(--muted)" }}>
+                      {!geminiKey && <span className="block">🔴 Gemini API Key 미설정 → 오늘은 분석이 데모로 동작</span>}
+                      {!claudeKey && <span className="block">🔴 Claude API Key 미설정 → 내일로 분석이 데모로 동작</span>}
+                      {!gasUrl && <span className="block">🔴 GAS URL 미설정 → 샘플 데이터로 동작</span>}
+                      <span className="block mt-1">설정(⚙)에서 API Key를 입력하세요.</span>
                     </p>
                   </div>
                 </div>
@@ -1309,6 +1462,8 @@ function App() {
                   response={selectedResponse}
                   onBack={() => setSelectedResponse(null)}
                   gasUrl={gasUrl}
+                  geminiKey={geminiKey}
+                  claudeKey={claudeKey}
                 />
               ) : (
                 <>
@@ -1344,7 +1499,7 @@ function App() {
       </div>
 
       {/* 설정 모달 */}
-      <SettingsModal show={showSettings} onClose={() => setShowSettings(false)} gasUrl={gasUrl} setGasUrl={setGasUrl} />
+      <SettingsModal show={showSettings} onClose={() => setShowSettings(false)} gasUrl={gasUrl} setGasUrl={setGasUrl} geminiKey={geminiKey} setGeminiKey={setGeminiKey} claudeKey={claudeKey} setClaudeKey={setClaudeKey} />
     </>
   );
 }
