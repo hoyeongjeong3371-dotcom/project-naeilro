@@ -4,37 +4,107 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>프로젝트 내일로 — AI 참여자 분석 시스템</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='15' fill='%235B8DEF'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='16'>N</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='15' fill='%234E7AC7'/><path d='M10 20 L16 8 L22 20' stroke='white' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='16' cy='22' r='2' fill='white'/></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #252A36; border-radius: 4px; }
-  input::placeholder { color: #636B80; }
+/* ============================================================
+   프로젝트 내일로 — Design Tokens (LIGHT · WARM theme)
+   충북청주지역자활센터 · AI 참여자 분석 시스템
+   원본 다크 테마는 .theme-dark 로 보존 (<html class="theme-dark">).
+   ============================================================ */
+:root {
+  --bg:             #FAF7F2;
+  --surface:        #FFFFFF;
+  --surface-hover:  #F5F1EA;
+  --surface-active: #EDE7DD;
+  --border:         #E9E2D6;
+  --border-light:   #F0EBE2;
+  --heading:        #2B2620;
+  --text:           #3E3832;
+  --text-secondary: #6F665B;
+  --muted:          #A69C8E;
+  --accent:         #4E7AC7;
+  --accent-hover:   #3D69B6;
+  --accent-soft:    rgba(78,122,199,0.09);
+  --accent-border:  rgba(78,122,199,0.22);
+  --oneul:          #7B66D6;
+  --oneul-soft:     rgba(123,102,214,0.08);
+  --naeiro:         #2E9E78;
+  --naeiro-soft:    rgba(46,158,120,0.08);
+  --success:        #389E6B;
+  --warning:        #C8893A;
+  --error:          #D66A5C;
+  --font-display: 'Noto Sans KR', system-ui, sans-serif;
+  --font-body:    'Noto Sans KR', system-ui, sans-serif;
+  --scrim:   rgba(40,32,24,0.38);
+  --blur-bg: rgba(250,247,242,0.82);
+  --shadow-card:  0 1px 2px rgba(60,45,30,0.04), 0 3px 10px rgba(60,45,30,0.05);
+  --shadow-pop:   0 10px 28px -8px rgba(60,45,30,0.13);
+  --shadow-modal: 0 24px 60px -12px rgba(60,45,30,0.18);
+  --ease:     cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur:      200ms;
+  --dur-slow: 300ms;
+}
+.theme-dark {
+  --bg:#0C0E12; --surface:#14171E; --surface-hover:#1A1E28; --surface-active:#1F2433;
+  --border:#252A36; --border-light:#1E2330;
+  --heading:#F0F3FA; --text:#E8ECF4; --text-secondary:#8B93A7; --muted:#636B80;
+  --accent:#5B8DEF; --accent-hover:#4A7DE0;
+  --accent-soft:rgba(91,141,239,0.08); --accent-border:rgba(91,141,239,0.20);
+  --oneul:#A78BFA; --oneul-soft:rgba(167,139,250,0.06);
+  --naeiro:#34D399; --naeiro-soft:rgba(52,211,153,0.06);
+  --success:#4ADE80; --warning:#FBBF24; --error:#F87171;
+  --scrim:rgba(0,0,0,0.60); --blur-bg:rgba(12,14,18,0.85);
+  --shadow-card:none;
+  --shadow-modal:0 24px 60px -12px rgba(0,0,0,0.65);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+@keyframes nspin { to { transform: rotate(360deg); } }
+.nspin { animation: nspin 0.8s linear infinite; }
+details > summary::-webkit-details-marker { display: none; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-active); border-radius: 999px; }
+::placeholder { color: var(--muted); }
+/* markdown body */
+.md-body { line-height: 1.8; }
+.md-h1 { font-size: 16px; font-weight: 700; color: var(--heading); margin: 16px 0 8px; }
+.md-h2 { font-size: 15px; font-weight: 700; color: var(--heading); margin: 14px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.md-h3 { font-size: 13px; font-weight: 600; color: var(--heading); margin: 12px 0 4px; }
+.md-q { border-left: 3px solid var(--accent); padding-left: 12px; margin: 8px 0; color: var(--text-secondary); font-style: italic; }
+.md-li { display: flex; align-items: flex-start; gap: 8px; margin: 3px 0; }
+.md-dot { color: var(--accent); font-size: 9px; margin-top: 5px; }
+.md-ck { font-size: 13px; margin-top: 1px; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useCallback, useRef } = React;
+const { useState, useEffect, useRef } = React;
 
-
-
-// ============================================
-// 프로젝트 내일로 v2.0
+// ============================================================
+// 프로젝트 내일로 v2.1
 // 충북청주지역자활센터
-// Google Forms → AI 분석 → Word 다운로드
-// ============================================
+// Google Forms → AI 분석(오늘은:Gemini / 내일로:Claude) → 서식·Word 다운로드
+// 디자인: UI 키트(라이트·웜 테마) / 기능: 실제 API 연동
+// ============================================================
 
 // ── 설정 상수 ──
 const CONFIG = {
   GAS_PROXY_URL: "https://script.google.com/macros/s/AKfycbzF4dZjWUO6lZ2kgmsT58j-Jd8-y9StnY5tbBHuf7JCXrNfqPY2IVq_NMnQZViRkPxXXQ/exec",
-  GOOGLE_CLIENT_ID: "", // Google OAuth Client ID 입력
+  GOOGLE_CLIENT_ID: "",
   SPREADSHEET_ID: "1AGYpsLKhygVAk5-k0oNW-Rv2bI6_YElqYF__tp6y5nk",
   GEMINI_API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent",
   CLAUDE_API_URL: "https://api.anthropic.com/v1/messages",
@@ -45,23 +115,10 @@ const CONFIG = {
 // ── 설문지 17문항 매핑 ──
 const QUESTION_MAP = [
   "타임스탬프",
-  "1. 코드번호",
-  "2. 소속",
-  "3. 쉬는 날 에너지 충전 방식",
-  "4. 길찾기 방식",
-  "5. 친구가 울 때 반응",
-  "6. 일하는 방식 선호",
-  "7. 갈등 대처 방식",
-  "8. 어떤 칭찬이 기쁜지",
-  "9. 스트레스 해소 방식",
-  "10. 평소 시간 사용",
-  "11. 일할 때 중요한 가치",
-  "12. 인생 최고 순간",
-  "13. 인생 최악 순간",
-  "14. 힘든 시간 버티는 방법",
-  "15. 나의 진짜 장점",
-  "16. 1년 후 소망",
-  "17. 내일 아침 할 행동",
+  "1. 코드번호", "2. 소속", "3. 쉬는 날 에너지 충전 방식", "4. 길찾기 방식",
+  "5. 친구가 울 때 반응", "6. 일하는 방식 선호", "7. 갈등 대처 방식", "8. 어떤 칭찬이 기쁜지",
+  "9. 스트레스 해소 방식", "10. 평소 시간 사용", "11. 일할 때 중요한 가치", "12. 인생 최고 순간",
+  "13. 인생 최악 순간", "14. 힘든 시간 버티는 방법", "15. 나의 진짜 장점", "16. 1년 후 소망", "17. 내일 아침 할 행동",
 ];
 
 // ── 오늘은 프롬프트 v3.5 ──
@@ -136,90 +193,107 @@ const NAEIRO_PROMPT = `[Role Definition]
 - 감정 상태: ( ) 긍정 / ( ) 보통 / ( ) 부정 / ( ) 에너지 고갈
 - 슈퍼바이저 월말 평가: 당월 달성도 (초과/정상/미달성) 및 차월 목표 변경안 기재. 다그치지 않고 소통 가이드에 맞춘 따뜻한 개입 방안을 반드시 포함할 것.`;
 
-// ── 아이콘 컴포넌트 ──
-const Icons = {
-  Logo: () => (
-    <svg viewBox="0 0 32 32" fill="none" className="w-8 h-8">
+// ── 아이콘 세트 (1.3–1.5 stroke, currentColor) ──
+const NIcons = {
+  Logo: ({ size = 32 }) => (
+    <svg viewBox="0 0 32 32" fill="none" width={size} height={size}>
       <circle cx="16" cy="16" r="15" stroke="currentColor" strokeWidth="1.5" />
       <path d="M10 20 L16 8 L22 20" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="16" cy="22" r="2" fill="currentColor" />
     </svg>
   ),
-  Search: () => (
-    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+  Search: ({ size = 16 }) => (
+    <svg viewBox="0 0 20 20" fill="none" width={size} height={size}>
       <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5" />
       <path d="M12.5 12.5L17 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
-  Analysis: () => (
-    <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
+  Analysis: ({ size = 20 }) => (
+    <svg viewBox="0 0 20 20" fill="none" width={size} height={size}>
       <path d="M3 17V7l4-4h6l4 4v10a1 1 0 01-1 1H4a1 1 0 01-1-1z" stroke="currentColor" strokeWidth="1.3" />
       <path d="M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   ),
-  Download: () => (
-    <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
+  Download: ({ size = 20 }) => (
+    <svg viewBox="0 0 20 20" fill="none" width={size} height={size}>
       <path d="M10 3v10m0 0l-3-3m3 3l3-3M4 15v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
-  Logout: () => (
-    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+  Logout: ({ size = 16 }) => (
+    <svg viewBox="0 0 20 20" fill="none" width={size} height={size}>
       <path d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3M13 14l4-4m0 0l-4-4m4 4H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
-  Spinner: () => (
-    <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+  Spinner: ({ size = 20 }) => (
+    <svg className="nspin" width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" opacity="0.2" />
       <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   ),
-  User: () => (
-    <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
-      <circle cx="10" cy="7" r="3" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-    </svg>
-  ),
-  Google: () => (
-    <svg viewBox="0 0 24 24" className="w-5 h-5">
+  Google: ({ size = 20 }) => (
+    <svg viewBox="0 0 24 24" width={size} height={size}>
       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
     </svg>
   ),
-  ChevronRight: () => (
-    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+  ChevronRight: ({ size = 16 }) => (
+    <svg viewBox="0 0 20 20" fill="none" width={size} height={size}>
       <path d="M7 4l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
-  Back: () => (
-    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+  Back: ({ size = 18 }) => (
+    <svg viewBox="0 0 20 20" fill="none" width={size} height={size}>
       <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
+  Route: ({ size = 16 }) => (
+    <svg viewBox="0 0 20 20" fill="none" width={size} height={size}>
+      <path d="M10 2L3 7v6l7 5 7-5V7l-7-5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M10 12V8m0 0L7 10m3-2l3 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  CheckCircle: ({ size = 15 }) => (
+    <svg viewBox="0 0 16 16" fill="none" width={size} height={size}>
+      <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  ),
+  Upload: ({ size = 22 }) => (
+    <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
+      <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  Doc: ({ size = 14 }) => (
+    <svg viewBox="0 0 20 20" fill="none" width={size} height={size}>
+      <path d="M5 2.5h6l4 4V17a.5.5 0 01-.5.5h-9A.5.5 0 015 17V3a.5.5 0 010-.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M11 2.5V6.5h4M7.5 11h5M7.5 13.5h3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
 };
+const I = NIcons;
 
-// ── 마크다운 간이 렌더러 ──
+// ── 간이 마크다운 렌더러 ──
 function renderMarkdown(md) {
   if (!md) return "";
   return md
-    .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-6 mb-2 text-[var(--heading)]">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold mt-8 mb-3 text-[var(--heading)] border-b border-[var(--border)] pb-2">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-8 mb-4 text-[var(--heading)]">$1</h1>')
-    .replace(/^> (.+)$/gm, '<blockquote class="border-l-3 border-[var(--accent)] pl-4 my-3 text-[var(--muted)] italic">$1</blockquote>')
-    .replace(/^- \[( |x)\] (.+)$/gm, (_, c, t) => `<div class="flex items-start gap-2 my-1"><span class="mt-0.5 text-sm">${c === 'x' ? '☑' : '☐'}</span><span>${t}</span></div>`)
-    .replace(/^- (.+)$/gm, '<div class="flex items-start gap-2 my-1"><span class="text-[var(--accent)] mt-1 text-xs">●</span><span>$1</span></div>')
-    .replace(/^---$/gm, '<hr class="my-6 border-[var(--border)]" />')
-    .replace(/\n{2,}/g, '<div class="h-3"></div>')
+    .replace(/^### (.+)$/gm, '<h3 class="md-h3">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 class="md-h2">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 class="md-h1">$1</h1>')
+    .replace(/^> (.+)$/gm, '<blockquote class="md-q">$1</blockquote>')
+    .replace(/^- \[( |x)\] (.+)$/gm, (_, c, t) => `<div class="md-li"><span class="md-ck">${c === 'x' ? '☑' : '☐'}</span><span>${t}</span></div>`)
+    .replace(/^- (.+)$/gm, '<div class="md-li"><span class="md-dot">●</span><span>$1</span></div>')
+    .replace(/^---$/gm, '<hr style="margin:16px 0;border:none;border-top:1px solid var(--border)" />')
+    .replace(/\n{2,}/g, '<div style="height:10px"></div>')
     .replace(/\n/g, "<br/>");
 }
 
-// ── 데모 데이터 (GAS 미연결 시) ──
+// ── 데모 데이터 (GAS 미연결 시 폴백) ──
 const DEMO_RESPONSES = [
   {
-    timestamp: "2026-03-28 09:15:22",
-    code: "CJ-2603-001",
-    org: "베니오유",
+    timestamp: "2026-03-28 09:15:22", code: "CJ-2603-001", org: "베니오유",
     answers: {
       "3": "집에서 혼자 조용히 쉬어야 기운이 난다.",
       "4": "스마트폰 지도를 보거나 전체적인 방향 느낌으로 찾는다.",
@@ -239,9 +313,7 @@ const DEMO_RESPONSES = [
     },
   },
   {
-    timestamp: "2026-03-29 14:02:11",
-    code: "CJ-2603-002",
-    org: "느티나무식당",
+    timestamp: "2026-03-29 14:02:11", code: "CJ-2603-002", org: "느티나무식당",
     answers: {
       "3": "밖에서 사람들을 만나고 어울려야 기운이 난다.",
       "4": "'저기 큰 마트 쪽으로 가자' 하고 눈에 보이는 큰 건물이나 간판을 보고 찾는다.",
@@ -262,243 +334,326 @@ const DEMO_RESPONSES = [
   },
 ];
 
-// ── CSS 변수 ──
-const cssVars = `
-  :root {
-    --bg: #0C0E12;
-    --surface: #14171E;
-    --surface-hover: #1A1E28;
-    --surface-active: #1F2433;
-    --border: #252A36;
-    --border-light: #1E2330;
-    --text: #E8ECF4;
-    --text-secondary: #8B93A7;
-    --muted: #636B80;
-    --heading: #F0F3FA;
-    --accent: #5B8DEF;
-    --accent-hover: #4A7DE0;
-    --accent-soft: rgba(91,141,239,0.08);
-    --accent-border: rgba(91,141,239,0.2);
-    --success: #4ADE80;
-    --warning: #FBBF24;
-    --error: #F87171;
-    --oneul: #A78BFA;
-    --naeiro: #34D399;
-    --font-display: 'Noto Sans KR', system-ui, sans-serif;
-    --font-body: 'Noto Sans KR', system-ui, sans-serif;
-  }
-`;
+// 데모 분석 결과 (API Key 미설정 시)
+const DEMO_ONEUL = `## Part 1. 심층 DNA 분석
+
+### 1. 참여자 성향 심층 프로필 (DNA)
+
+이 참여자는 내면으로 에너지를 수렴시키는 성향으로, 외부 자극보다 내적 세계의 질서와 조화를 우선하는 인지 구조를 지니고 있다. 세상을 대하는 일차적 방어기제는 '감정 차단'이다. 타인의 감정에는 깊이 공명하면서도 정작 자신의 고통에 대해서는 인식 자체를 차단하는 패턴이 반복적으로 나타난다.
+
+기저 동기는 '안전한 연결'에 대한 갈망이다. 표면적으로는 독립적이고 자족적인 모습을 유지하지만, 그 이면에는 타인에게 짐이 되지 않으면서도 깊이 연결되고 싶은 모순적 욕구가 작동하고 있다.
+
+### 2. 인생 그래프 심층 서사 (Story)
+
+참여자가 선택한 단편적 지표들은 하나의 명확한 패턴으로 수렴한다. 가족과의 정서적 교류가 삶의 정점이었고, 심신의 고통이 삶의 저점이었다는 것. 가장 힘든 시간을 '고립'으로 버텼다는 응답은, 고통을 드러내면 관계가 파괴될 것이라는 무의식적 믿음 체계의 발현이다.
+
+### 3. SWOT 심리 및 역량 진단
+
+> 강점(S)
+- 타인의 감정 상태를 빠르게 포착하는 높은 정서 지능
+- 목표 설정 후 포기하지 않는 집요한 완수 역량
+
+> 약점(W)
+- 자기 감정 표현의 만성적 억제
+- 도움 요청을 자존감 훼손으로 인식하는 경직된 신념
+
+> 기회(O)
+- 안정적 환경에서의 신뢰 관계 형성 가능성
+- 섬세한 감수성을 활용한 서비스/돌봄 직무 적합성
+
+> 위협(T)
+- 장기 고립 시 무력감으로의 급격한 전환
+- 완벽주의적 기준으로 인한 자기 비하 사이클
+
+### 4. IAP 개인별 자립지원 계획 설계
+
+> IAP 설계 목적: 안전한 관계 경험을 통해 고립이라는 생존 기제를 점진적으로 해제하고, 정서 지능을 자활 직무 역량으로 전환하는 것
+
+- 핵심 방향성
+- 1년차: 신뢰할 수 있는 단 한 명의 관계 구축 + 규칙적 출퇴근 안정화
+- 2년차: 소규모 팀 협업 경험 + 직무 기술 습득
+- 3년차: 자립 경로 확정 및 독립 준비`;
+
+const DEMO_NAEIRO = `### 1. 3년 자활 로드맵 및 당해 연도 분기별 계획
+
+> '고립이라는 오래된 생존 전략을 내려놓고, 안전한 연결 속에서 나만의 속도로 자립의 길을 걸어가는 3년의 여정'
+
+- [1년차 핵심 목표]: 안정적 근태 확립과 신뢰 관계 1인 형성
+- 1분기: 주 5일 출근 루틴 정착, 담당자와 주 1회 5분 대화 시작
+- 2분기: 직무 기초 교육 참여, 팀 내 인사 나누기 실천
+- 3분기: 소규모 협업 과제 1회 참여, 감정 일기 주 2회 작성
+- 4분기: 1년차 성찰 및 2년차 목표 공동 설정
+- [2년차 핵심 목표]: 직무 역량 강화 및 팀 내 역할 확대
+- [3년차 핵심 목표]: 자립 경로 확정 및 외부 취업/창업 준비
+
+### 2. 당월 실천 계획 및 모더레이션 지표
+
+- 당월 핵심 목표: 주 5일 출근 유지 + 담당자와 주 1회 자연스러운 대화
+- 직무 실천: 출근 후 작업 공간을 10분간 정리하고, 오늘 할 일 1가지를 메모지에 적어 붙이기
+- 생활 실천: 매일 아침 창문을 열고 바깥 공기를 5분간 마시며 심호흡하기
+- 위험 통제 지표: 3일 연속 점심을 혼자 먹으면 담당자에게 먼저 말 한마디 건네기
+
+### 3. 주간 모니터링 일지 및 월말 동적 점검표
+
+- [ ] 환경 안정 (근태): 이번 주 5일 중 몇 일 출근했나요?
+- [ ] 위험 관리 (방어막 유지): 혼자 있고 싶은 충동이 3일 이상 지속되지 않았나요?
+- [ ] 당월 실천 (루틴/목표): 아침 심호흡과 작업 공간 정리를 실천했나요?
+- 감정 상태: ( ) 긍정 / ( ) 보통 / ( ) 부정 / ( ) 에너지 고갈`;
+
+// ── 공용 UI 프리미티브 ──
+function Button({ variant = "primary", color, icon, children, full, size = "md", ...rest }) {
+  const pad = size === "sm" ? "8px 14px" : "12px 18px";
+  const fs = size === "sm" ? 12 : 14;
+  const base = {
+    display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
+    fontFamily: "inherit", fontSize: fs, fontWeight: 600, borderRadius: 13,
+    padding: pad, border: "none", cursor: rest.disabled ? "not-allowed" : "pointer",
+    width: full ? "100%" : "auto", opacity: rest.disabled ? 0.55 : 1,
+    transition: "all var(--dur) var(--ease)",
+  };
+  const styles = {
+    primary: { background: "var(--accent)", color: "#fff" },
+    program: { background: color, color: "#fff" },
+    ghost:   { background: "var(--surface-hover)", color: "var(--text-secondary)", border: "1px solid var(--border)" },
+    soft:    { background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent-border)" },
+  };
+  const [hov, setHov] = useState(false);
+  const hovStyle = !rest.disabled && hov && (variant === "primary" || variant === "program") ? { opacity: 0.88 }
+                 : !rest.disabled && hov && variant === "ghost" ? { background: "var(--surface-active)" } : {};
+  return (
+    <button {...rest} style={{ ...base, ...styles[variant], ...hovStyle, ...(rest.style || {}) }}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+      {icon}{children}
+    </button>
+  );
+}
+
+function Badge({ tone = "neutral", color, children }) {
+  const map = {
+    neutral: { background: "var(--surface-active)", color: "var(--text-secondary)" },
+    accent:  { background: "rgba(78,122,199,.12)", color: "var(--accent)" },
+    oneul:   { background: "rgba(123,102,214,.1)", color: "var(--oneul)" },
+    naeiro:  { background: "rgba(46,158,120,.1)", color: "var(--naeiro)" },
+    warning: { background: "rgba(200,137,58,.12)", color: "var(--warning)" },
+    error:   { background: "rgba(214,106,92,.1)", color: "var(--error)" },
+  };
+  const s = color ? { background: color + "1A", color } : map[tone];
+  return <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 999, ...s }}>{children}</span>;
+}
+
+function ProgressBar({ label, progress, color }) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color }}>{label}</span>
+        <span style={{ fontSize: 12, color: "var(--muted)" }}>{progress}%</span>
+      </div>
+      <div style={{ height: 6, borderRadius: 999, background: "var(--surface-active)", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${progress}%`, borderRadius: 999, background: color, transition: "width var(--dur-slow) var(--ease)" }} />
+      </div>
+    </div>
+  );
+}
+
+function MarkdownView({ md, style }) {
+  return <div className="md-body" style={style} dangerouslySetInnerHTML={{ __html: renderMarkdown(md) }} />;
+}
 
 // ── 로그인 화면 ──
 function LoginScreen({ onLogin }) {
   const [loading, setLoading] = useState(false);
-
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     setLoading(true);
     // 데모 모드: 실제 Google OAuth는 GAS 연동 시 활성화
-    setTimeout(() => {
-      onLogin({
-        name: "관리자",
-        email: "admin@jachwal.or.kr",
-        photo: null,
-      });
-    }, 1200);
+    setTimeout(() => onLogin({ name: "관리자", email: "admin@jachwal.or.kr", photo: null }), 1100);
   };
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "var(--bg)" }}>
-      <div className="w-full max-w-sm">
-        {/* 로고 영역 */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-5" style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}>
-            <Icons.Logo />
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "var(--bg)" }}>
+      <div style={{ width: "100%", maxWidth: 360 }}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 64, height: 64, borderRadius: 22, marginBottom: 18, background: "var(--accent-soft)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}>
+            <I.Logo size={32} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--heading)", fontFamily: "var(--font-display)" }}>
-            프로젝트 내일로
-          </h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
-            충북청주지역자활센터 AI 참여자 분석 시스템
-          </p>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--heading)" }}>프로젝트 내일로</h1>
+          <p style={{ marginTop: 8, fontSize: 13, color: "var(--muted)" }}>충북청주지역자활센터 AI 참여자 분석 시스템</p>
         </div>
-
-        {/* 로그인 카드 */}
-        <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <p className="text-sm mb-5 text-center" style={{ color: "var(--text-secondary)" }}>
-            센터 직원 계정으로 로그인해 주세요
-          </p>
-          <button
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200"
-            style={{
-              background: loading ? "var(--surface-active)" : "#fff",
-              color: loading ? "var(--muted)" : "#1f1f1f",
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
-          >
-            {loading ? <Icons.Spinner /> : <Icons.Google />}
+        <div style={{ borderRadius: 22, padding: 26, background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}>
+          <p style={{ fontSize: 13, marginBottom: 18, textAlign: "center", color: "var(--text-secondary)" }}>센터 직원 계정으로 로그인해 주세요</p>
+          <button onClick={handleGoogleLogin} disabled={loading}
+            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "12px 16px", borderRadius: 16, fontSize: 14, fontWeight: 500, fontFamily: "inherit", cursor: loading ? "default" : "pointer",
+              background: "var(--surface)", color: loading ? "var(--muted)" : "#3c4043", border: "1px solid var(--border)", boxShadow: loading ? "none" : "var(--shadow-card)", transition: "all var(--dur) var(--ease)" }}>
+            {loading ? <I.Spinner size={20} /> : <I.Google size={20} />}
             {loading ? "로그인 중..." : "Google 계정으로 로그인"}
           </button>
         </div>
-
-        <p className="text-center mt-6 text-xs" style={{ color: "var(--muted)" }}>
-          {CONFIG.APP_VERSION} &middot; 허가된 직원만 접근 가능합니다
-        </p>
+        <p style={{ textAlign: "center", marginTop: 22, fontSize: 11, color: "var(--muted)" }}>{CONFIG.APP_VERSION} · 허가된 직원만 접근 가능합니다</p>
       </div>
     </div>
   );
 }
 
-// ── 응답 목록 화면 ──
+// ── 응답 목록 ──
 function ResponseList({ responses, onSelect, searchTerm, setSearchTerm }) {
-  const filtered = responses.filter(
-    (r) =>
-      r.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.org.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  const [hover, setHover] = useState(null);
+  const filtered = responses.filter(r =>
+    r.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.org.toLowerCase().includes(searchTerm.toLowerCase()));
   return (
     <div>
-      {/* 검색바 */}
-      <div className="relative mb-4">
-        <div className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--muted)" }}>
-          <Icons.Search />
-        </div>
-        <input
-          type="text"
-          placeholder="코드번호 또는 소속으로 검색..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none transition-all"
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-            color: "var(--text)",
-          }}
-        />
+      <div style={{ position: "relative", marginBottom: 16 }}>
+        <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }}><I.Search size={16} /></span>
+        <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="코드번호 또는 소속으로 검색..."
+          style={{ width: "100%", paddingLeft: 38, paddingRight: 16, paddingTop: 11, paddingBottom: 11, borderRadius: 16, fontSize: 14, fontFamily: "inherit", outline: "none", background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)", boxShadow: "var(--shadow-card)" }} />
       </div>
-
-      {/* 응답 카운트 */}
-      <div className="flex items-center justify-between mb-3 px-1">
-        <span className="text-xs" style={{ color: "var(--muted)" }}>
-          전체 {filtered.length}건
-        </span>
-        <span className="text-xs" style={{ color: "var(--muted)" }}>최신순</span>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, padding: "0 2px" }}>
+        <span style={{ fontSize: 12, color: "var(--muted)" }}>전체 {filtered.length}건</span>
+        <span style={{ fontSize: 12, color: "var(--muted)" }}>최신순</span>
       </div>
-
-      {/* 응답 카드 */}
-      <div className="space-y-2">
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtered.map((r, i) => (
-          <button
-            key={i}
-            onClick={() => onSelect(r)}
-            className="w-full text-left p-4 rounded-xl transition-all duration-150 group"
-            style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--surface-hover)";
-              e.currentTarget.style.borderColor = "var(--accent-border)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "var(--surface)";
-              e.currentTarget.style.borderColor = "var(--border)";
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold"
-                  style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
-                >
-                  {r.code.split("-").pop()}
-                </div>
-                <div>
-                  <div className="text-sm font-medium" style={{ color: "var(--text)" }}>
-                    {r.code}
-                  </div>
-                  <div className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-                    {r.org} &middot; {r.timestamp.split(" ")[0]}
-                  </div>
-                </div>
-              </div>
-              <div style={{ color: "var(--muted)" }}>
-                <Icons.ChevronRight />
-              </div>
+          <button key={i} onClick={() => onSelect(r)} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
+            style={{ width: "100%", textAlign: "left", padding: 14, borderRadius: 16, cursor: "pointer", fontFamily: "inherit",
+              display: "flex", alignItems: "center", gap: 12, transition: "all var(--dur-fast) var(--ease)",
+              background: hover === i ? "var(--surface-hover)" : "var(--surface)",
+              border: `1px solid ${hover === i ? "var(--accent-border)" : "var(--border)"}`, boxShadow: "var(--shadow-card)" }}>
+            <div style={{ width: 40, height: 40, borderRadius: 999, background: "var(--accent-soft)", color: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 600 }}>{r.code.split("-").pop()}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{r.code}</div>
+              <div style={{ fontSize: 12, marginTop: 2, color: "var(--muted)" }}>{r.org} · {r.timestamp.split(" ")[0]}</div>
             </div>
+            <span style={{ color: hover === i ? "var(--accent)" : "var(--muted)" }}><I.ChevronRight size={16} /></span>
           </button>
         ))}
+        {filtered.length === 0 && <div style={{ textAlign: "center", padding: "48px 0", fontSize: 13, color: "var(--muted)" }}>검색 결과가 없습니다</div>}
       </div>
-
-      {filtered.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-sm" style={{ color: "var(--muted)" }}>
-            검색 결과가 없습니다
-          </p>
-        </div>
-      )}
     </div>
   );
 }
 
-// ── 다운로드 센터 컴포넌트 ──
+// ── 현황 대시보드 (센터 직원 개요) ──
+function StatCard({ label, value, sub, accent }) {
+  return (
+    <div style={{ flex: 1, minWidth: 0, padding: "16px 18px", borderRadius: 16, background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}>
+      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+        <span style={{ fontSize: 26, fontWeight: 700, color: accent || "var(--heading)" }}>{value}</span>
+        {sub && <span style={{ fontSize: 12, color: "var(--muted)" }}>{sub}</span>}
+      </div>
+    </div>
+  );
+}
+
+function SectionCard({ title, sub, children }) {
+  return (
+    <div style={{ borderRadius: 16, background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)", padding: 18 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--heading)" }}>{title}</span>
+        {sub && <span style={{ fontSize: 11, color: "var(--muted)" }}>{sub}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function DashboardScreen({ responses }) {
+  // 전체 참여자 수와 사업단 분포는 실제 응답 데이터에서 집계
+  const total = responses.length;
+  const orgMap = {};
+  responses.forEach(r => { orgMap[r.org] = (orgMap[r.org] || 0) + 1; });
+  const orgs = Object.entries(orgMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+  const orgMax = Math.max(1, ...orgs.map(o => o.count));
+  const quarter = responses[0]?.timestamp ? responses[0].timestamp.slice(0, 7) : "";
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--heading)" }}>센터 현황</h2>
+        <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{quarter ? quarter + " · " : ""}참여자 분석 개요</p>
+      </div>
+
+      <div style={{ display: "flex", gap: 10 }}>
+        <StatCard label="전체 참여자" value={total} sub="명" />
+        <StatCard label="사업단 수" value={orgs.length} sub="개" accent="var(--accent)" />
+      </div>
+
+      <SectionCard title="사업단별 참여 현황">
+        {orgs.length === 0 ? (
+          <p style={{ fontSize: 12, color: "var(--muted)" }}>표시할 응답이 없습니다.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+            {orgs.map(o => (
+              <div key={o.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ flex: "0 0 96px", fontSize: 12, color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.name}</span>
+                <div style={{ flex: 1, height: 10, borderRadius: 999, background: "var(--surface-active)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${(o.count / orgMax) * 100}%`, borderRadius: 999, background: "var(--accent)", opacity: 0.85 }} />
+                </div>
+                <span style={{ width: 26, textAlign: "right", fontSize: 12, fontWeight: 600, color: "var(--text)" }}>{o.count}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard title="최근 응답">
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {responses.slice(0, 5).map((r, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 999, background: "var(--accent)" }} />
+              <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{r.code}</span>
+              <span style={{ fontSize: 11, color: "var(--muted)" }}>{r.org}</span>
+              <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--muted)" }}>{r.timestamp.split(" ")[0]}</span>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
+// ── 다운로드 센터 (GAS 서식 생성 + Word) ──
 function DownloadCenter({ response, oneulResult, naeirResult, selectedPath, gasUrl, downloadAsWord }) {
   const [generating, setGenerating] = useState(null);
   const [statusMsg, setStatusMsg] = useState("");
+  const [hover, setHover] = useState(null);
 
-  // GAS에서 데이터 추출 + 템플릿 서식 생성
   const generateFromTemplate = async (type) => {
     if (type === "interview") {
       setStatusMsg("면접지 생성 중...");
       const genRes = await fetch(gasUrl, {
-        method: "POST",
-        redirect: "follow",
-        body: JSON.stringify({
-          action: "generateInterview",
-          data: { counselor: "" },
-          participant: { code: response.code, org: response.org },
-        }),
+        method: "POST", redirect: "follow",
+        body: JSON.stringify({ action: "generateInterview", data: { counselor: "" }, participant: { code: response.code, org: response.org } }),
       });
       const genData = await genRes.json();
       if (!genData.success) throw new Error(genData.error || "면접지 생성 실패");
       return genData;
     }
-
-    // 1단계: AI로 구조화된 데이터 추출
     setStatusMsg(type === "iap" ? "IAP 데이터 추출 중..." : "ISP 데이터 추출 중...");
     const extractAction = type === "iap" ? "extractForIAP" : "extractForISP";
     const extractRes = await fetch(gasUrl, {
-      method: "POST",
-      redirect: "follow",
-      body: JSON.stringify({
-        action: extractAction,
-        oneulResult,
-        naeirResult,
-        selectedPath: selectedPath || "",
-      }),
+      method: "POST", redirect: "follow",
+      body: JSON.stringify({ action: extractAction, oneulResult, naeirResult, selectedPath: selectedPath || "" }),
     });
     const extractData = await extractRes.json();
     if (!extractData.success) throw new Error(extractData.error || "데이터 추출 실패");
-
-    // 2단계: 추출된 데이터로 템플릿 서식 생성
     setStatusMsg(type === "iap" ? "IAP 서식 생성 중..." : "ISP 서식 생성 중...");
     const generateAction = type === "iap" ? "generateIAP" : "generateISP";
     const genRes = await fetch(gasUrl, {
-      method: "POST",
-      redirect: "follow",
-      body: JSON.stringify({
-        action: generateAction,
-        data: extractData.data,
-        participant: { code: response.code, org: response.org },
-      }),
+      method: "POST", redirect: "follow",
+      body: JSON.stringify({ action: generateAction, data: extractData.data, participant: { code: response.code, org: response.org } }),
     });
     const genData = await genRes.json();
     if (!genData.success) throw new Error(genData.error || "서식 생성 실패");
     return genData;
   };
 
+  const downloadIntegrated = () => {
+    const report = `# 프로젝트 내일로 종합 분석 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n선택 경로: ${selectedPath || "미선택"}\n\n---\n\n## Part 1. 심층 DNA 분석 (오늘은)\n\n${oneulResult}\n\n---\n\n## Part 2. 실행 계획 설계 (내일로)\n\n${naeirResult}\n\n---\n\n> 본 리포트는 2개의 독립적인 AI 분석 프롬프트를 통해 생성되었습니다.\n> 충북청주지역자활센터 프로젝트 내일로 ${CONFIG.APP_VERSION}`;
+    downloadAsWord(report, `내일로_종합리포트_${response.code}`);
+  };
+
   const downloadItem = async (type) => {
+    if (type === "word") { downloadIntegrated(); return; }
+    if (!gasUrl) { alert("GAS 프록시 URL이 설정되지 않아 서식을 생성할 수 없습니다. 설정(⚙)에서 URL을 입력해 주세요."); return; }
     setGenerating(type);
     setStatusMsg("");
     try {
@@ -512,17 +667,10 @@ function DownloadCenter({ response, oneulResult, naeirResult, selectedPath, gasU
     setStatusMsg("");
   };
 
-  const downloadIntegrated = () => {
-    const report = `# 프로젝트 내일로 종합 분석 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n선택 경로: ${selectedPath || "미선택"}\n\n---\n\n## Part 1. 심층 DNA 분석 (오늘은)\n\n${oneulResult}\n\n---\n\n## Part 2. 실행 계획 설계 (내일로)\n\n${naeirResult}\n\n---\n\n> 본 리포트는 2개의 독립적인 AI 분석 프롬프트를 통해 생성되었습니다.\n> 충북청주지역자활센터 프로젝트 내일로 v2.0`;
-    downloadAsWord(report, `내일로_종합리포트_${response.code}`);
-  };
-
   const downloadAll = async () => {
     setGenerating("all");
     try {
-      await downloadItem("iap");
-      await downloadItem("isp");
-      await downloadItem("interview");
+      if (gasUrl) { await downloadItem("iap"); await downloadItem("isp"); await downloadItem("interview"); }
       downloadIntegrated();
     } catch (err) {
       alert("일괄 다운로드 중 오류: " + err.message);
@@ -531,189 +679,246 @@ function DownloadCenter({ response, oneulResult, naeirResult, selectedPath, gasU
   };
 
   const items = [
-    { id: "iap", icon: "📋", label: "IAP 서식", desc: "자립경로 (약점/강점, 단·중·장기 목표, 자활경로)", ext: ".xlsx", action: () => downloadItem("iap") },
-    { id: "isp", icon: "📊", label: "ISP 서식", desc: "자활지원계획 (욕구영역, 합의 목표, 실행과제)", ext: ".xlsx", action: () => downloadItem("isp") },
-    { id: "interview", icon: "📄", label: "기본면접지", desc: "참여자 기본면접기록지 (상담일자 자동 입력)", ext: ".xlsx", action: () => downloadItem("interview") },
-    { id: "word", icon: "📝", label: "종합 리포트", desc: "오늘은 + 내일로 전체 분석 결과", ext: ".doc", action: downloadIntegrated },
+    { id: "iap", icon: "📋", label: "IAP 서식", desc: "자립경로 (약점/강점, 단·중·장기 목표, 자활경로)", ext: ".xlsx" },
+    { id: "isp", icon: "📊", label: "ISP 서식", desc: "자활지원계획 (욕구영역, 합의 목표, 실행과제)", ext: ".xlsx" },
+    { id: "interview", icon: "📄", label: "기본면접지", desc: "참여자 기본면접기록지 (상담일자 자동 입력)", ext: ".xlsx" },
+    { id: "word", icon: "📝", label: "종합 리포트", desc: "오늘은 + 내일로 전체 분석 결과", ext: ".doc" },
   ];
 
   return (
-    <div className="rounded-xl overflow-hidden mb-4" style={{ border: "1px solid var(--border)" }}>
-      <div className="px-4 py-3 flex items-center justify-between" style={{ background: "rgba(91,141,239,0.06)", borderBottom: "1px solid var(--border)" }}>
-        <div className="flex items-center gap-2">
-          <Icons.Download />
-          <span className="text-xs font-bold" style={{ color: "var(--accent)" }}>다운로드 센터</span>
-        </div>
-        <button onClick={downloadAll} disabled={generating}
-          className="text-[10px] px-3 py-1 rounded-full font-medium transition-all"
-          style={{ background: generating ? "var(--surface-active)" : "var(--accent)", color: generating ? "var(--muted)" : "#fff" }}>
+    <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 12, background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "var(--accent-soft)", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--accent)" }}><I.Download size={18} /><span style={{ fontSize: 12, fontWeight: 700 }}>다운로드 센터</span></div>
+        <button onClick={downloadAll} disabled={!!generating}
+          style={{ fontSize: 10, padding: "5px 12px", borderRadius: 999, border: "none", cursor: generating ? "default" : "pointer", fontWeight: 600, fontFamily: "inherit",
+            background: generating ? "var(--surface-active)" : "var(--accent)", color: generating ? "var(--muted)" : "#fff" }}>
           {generating === "all" ? "생성 중..." : "전체 다운로드"}
         </button>
       </div>
       {statusMsg && (
-        <div className="px-4 py-2 flex items-center gap-2" style={{ background: "var(--surface-active)" }}>
-          <Icons.Spinner />
-          <span className="text-[10px]" style={{ color: "var(--accent)" }}>{statusMsg}</span>
+        <div style={{ padding: "8px 16px", display: "flex", alignItems: "center", gap: 8, background: "var(--surface-active)" }}>
+          <span style={{ color: "var(--accent)" }}><I.Spinner size={14} /></span>
+          <span style={{ fontSize: 10, color: "var(--accent)" }}>{statusMsg}</span>
         </div>
       )}
-      <div className="divide-y" style={{ background: "var(--surface)", borderColor: "var(--border-light)" }}>
-        {items.map((item) => (
-          <button key={item.id} onClick={item.action} disabled={generating}
-            className="w-full text-left px-4 py-3 flex items-center gap-3 transition-all"
-            style={{ opacity: generating && generating !== item.id && generating !== "all" ? 0.5 : 1 }}
-            onMouseEnter={(e) => { if (!generating) e.currentTarget.style.background = "var(--surface-hover)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-            <span className="text-lg">{item.icon}</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold" style={{ color: "var(--text)" }}>{item.label}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "var(--surface-active)", color: "var(--muted)" }}>{item.ext}</span>
+      <div>
+        {items.map((it, i) => (
+          <button key={it.id} onClick={() => downloadItem(it.id)} disabled={!!generating}
+            onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
+            style={{ width: "100%", textAlign: "left", padding: "13px 16px", display: "flex", alignItems: "center", gap: 12, cursor: generating ? "default" : "pointer", fontFamily: "inherit",
+              opacity: generating && generating !== it.id && generating !== "all" ? 0.5 : 1,
+              background: hover === i && !generating ? "var(--surface-hover)" : "transparent", border: "none", borderBottom: i < items.length - 1 ? "1px solid var(--border-light)" : "none" }}>
+            <span style={{ fontSize: 18 }}>{it.icon}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap" }}>{it.label}</span>
+                <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "var(--surface-active)", color: "var(--muted)" }}>{it.ext}</span>
               </div>
-              <p className="text-[10px] mt-0.5 truncate" style={{ color: "var(--muted)" }}>{item.desc}</p>
+              <p style={{ fontSize: 10, marginTop: 2, color: "var(--muted)" }}>{it.desc}</p>
             </div>
-            {generating === item.id || generating === "all" ? (
-              <div style={{ color: "var(--accent)" }}><Icons.Spinner /></div>
-            ) : (
-              <div style={{ color: "var(--muted)" }}><Icons.ChevronRight /></div>
-            )}
+            <span style={{ color: "var(--muted)" }}>{(generating === it.id || generating === "all") ? <I.Spinner size={14} /> : <I.ChevronRight size={16} />}</span>
           </button>
         ))}
       </div>
-      <div className="px-4 py-2" style={{ background: "var(--bg)", borderTop: "1px solid var(--border-light)" }}>
-        <p className="text-[10px]" style={{ color: "var(--muted)" }}>
-          원본 서식이 100% 유지됩니다. AI가 분석 결과를 해당 셀에 자동 입력합니다. 다운로드 후 참여자 인적사항을 보완해 주세요.
-        </p>
+      <div style={{ padding: "8px 16px", background: "var(--bg)", borderTop: "1px solid var(--border-light)" }}>
+        <p style={{ fontSize: 10, color: "var(--muted)" }}>원본 서식이 100% 유지됩니다. AI가 분석 결과를 해당 셀에 자동 입력합니다. 다운로드 후 참여자 인적사항을 보완해 주세요.</p>
       </div>
     </div>
   );
 }
 
-// ── 진행률 바 컴포넌트 ──
-function ProgressBar({ label, progress, color }) {
+// ── 개별 분석 카드 ──
+function AnalysisCard({ label, subtitle, color, colorSoft, result, state, progress, errorMsg, desc, context, showNote, note, setNote, files, setFiles, onRun, onReset, onDownload }) {
+  const [noteTab, setNoteTab] = useState("text");
+  const fmtSize = (b) => b < 1024 ? b + "B" : b < 1048576 ? (b / 1024).toFixed(0) + "KB" : (b / 1048576).toFixed(1) + "MB";
+  const addFiles = (e) => {
+    const picked = [...e.target.files].map(f => ({ name: f.name, size: f.size }));
+    setFiles([...(files || []), ...picked]);
+    e.target.value = "";
+  };
   return (
-    <div className="mb-3">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-medium" style={{ color }}>{label}</span>
-        <span className="text-xs" style={{ color: "var(--muted)" }}>{progress}%</span>
+    <div style={{ borderRadius: 16, overflow: "hidden", background: "var(--surface)", boxShadow: "var(--shadow-card)", border: `1px solid ${state === "done" ? color + "44" : "var(--border)"}` }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: colorSoft, borderBottom: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 999, background: color }} />
+          <span style={{ fontSize: 12, fontWeight: 700, color }}>{label}</span>
+          <span style={{ fontSize: 10, color: "var(--muted)" }}>{subtitle}</span>
+        </div>
+        {state === "done" && <span style={{ fontSize: 10, padding: "2px 10px", borderRadius: 999, background: color + "1A", color }}>완료</span>}
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface-active)" }}>
-        <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: color }} />
-      </div>
-    </div>
-  );
-}
 
-// ── 개별 분석 카드 컴포넌트 ──
-function AnalysisCard({ type, label, subtitle, color, colorSoft, result, state, progress, errorMsg, onRun, onReset, onDownload, disabled, disabledReason }) {
-  // state: idle | analyzing | done | error
-  const isOneul = type === "oneul";
-
-  return (
-    <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${state === "done" ? color + "33" : "var(--border)"}` }}>
-      {/* 카드 헤더 */}
-      <div className="px-4 py-3 flex items-center justify-between" style={{ background: colorSoft, borderBottom: "1px solid var(--border)" }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
-          <div>
-            <span className="text-xs font-bold" style={{ color }}>{label}</span>
-            <span className="text-[10px] ml-2" style={{ color: "var(--muted)" }}>{subtitle}</span>
+      {context && (
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 16px", background: color + "0D", borderBottom: "1px solid var(--border-light)" }}>
+          <span style={{ color, marginTop: 1, flex: "0 0 auto" }}><I.Route size={14} /></span>
+          <div style={{ minWidth: 0 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color }}>확정 자활 경로</span>
+            <p style={{ fontSize: 12, fontWeight: 500, color: "var(--text)", marginTop: 1 }}>{context}</p>
           </div>
         </div>
-        {state === "done" && (
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: color + "1A", color }}>완료</span>
-          </div>
-        )}
-      </div>
+      )}
 
-      {/* 카드 본문 */}
-      <div style={{ background: "var(--surface)" }}>
-        {/* IDLE 상태: 분석 버튼 */}
-        {state === "idle" && (
-          <div className="p-4">
-            <p className="text-xs mb-3" style={{ color: "var(--text-secondary)" }}>
-              {isOneul
-                ? "참여자의 심리 성향, 인생 서사, SWOT 진단, IAP 계획을 분석합니다."
-                : "3년 자활 로드맵, 당월 실천 계획, 주간 모니터링 일지를 설계합니다."}
-            </p>
-            {disabled ? (
-              <div className="text-center py-2">
-                <p className="text-xs" style={{ color: "var(--muted)" }}>{disabledReason}</p>
+      {state === "idle" && (
+        <div style={{ padding: 16 }}>
+          <p style={{ fontSize: 12, marginBottom: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>{desc}</p>
+          <Button variant="program" color={color} full icon={<I.Analysis size={18} />} onClick={onRun}>{label} 분석 시작</Button>
+        </div>
+      )}
+
+      {state === "analyzing" && (
+        <div style={{ padding: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, color }}>
+            <I.Spinner size={18} /><span style={{ fontSize: 12, fontWeight: 500, color: "var(--text)" }}>AI 분석 진행 중...</span>
+          </div>
+          <ProgressBar label={label} progress={progress} color={color} />
+          <p style={{ fontSize: 10, color: "var(--muted)" }}>약 30초~1분 소요됩니다</p>
+        </div>
+      )}
+
+      {state === "error" && (
+        <div style={{ padding: 16 }}>
+          <div style={{ borderRadius: 11, padding: 12, marginBottom: 12, background: "rgba(214,106,92,.08)", border: "1px solid rgba(214,106,92,.2)" }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "var(--error)" }}>분석 오류</p>
+            <p style={{ fontSize: 11, marginTop: 2, color: "var(--muted)" }}>{errorMsg}</p>
+          </div>
+          <Button variant="ghost" size="sm" full onClick={onRun}>다시 시도</Button>
+        </div>
+      )}
+
+      {state === "done" && (
+        <div>
+          <div style={{ display: "flex", gap: 8, padding: "12px 16px 8px" }}>
+            <Button variant="program" color={color} full size="sm" icon={<I.Download size={16} />} onClick={onDownload}>Word 다운로드</Button>
+            <Button variant="ghost" size="sm" onClick={onReset}>재분석</Button>
+          </div>
+          <MarkdownView md={result} style={{ padding: "8px 16px 8px", fontSize: 13, color: "var(--text-secondary)", maxHeight: 360, overflowY: "auto" }} />
+
+          {showNote && (
+            <div style={{ padding: "12px 16px 16px", borderTop: "1px solid var(--border-light)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color }}>추가 분석 자료로 계획 보완 (선택)</span>
+                {(note.trim() || (files && files.length > 0)) && (
+                  <button onClick={() => { setNote(""); setFiles([]); }}
+                    style={{ fontSize: 10, padding: "2px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "var(--surface-active)", color: "var(--muted)" }}>지우기</button>
+                )}
               </div>
-            ) : (
-              <button
-                onClick={onRun}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all duration-200"
-                style={{ background: color, color: "#fff" }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-              >
-                <Icons.Analysis />
-                {label} 분석 시작
+              <p style={{ fontSize: 11, color: "var(--muted)", marginBottom: 10, lineHeight: 1.6 }}>분석 결과를 검토한 뒤 면담 기록·상담 일지 등 추가 메모를 더해 계획을 보완 분석할 수 있습니다. (메모 내용이 재분석에 반영됩니다)</p>
+
+              <div style={{ display: "flex", gap: 4, padding: 3, marginBottom: 10, borderRadius: 999, background: "var(--surface-active)" }}>
+                {[["text", "글 작성"], ["file", "파일 첨부"]].map(([k, lbl]) => (
+                  <button key={k} onClick={() => setNoteTab(k)}
+                    style={{ flex: 1, padding: "6px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: 600,
+                      background: noteTab === k ? "var(--surface)" : "transparent", color: noteTab === k ? color : "var(--text-secondary)",
+                      boxShadow: noteTab === k ? "var(--shadow-card)" : "none", transition: "all var(--dur) var(--ease)" }}>{lbl}</button>
+                ))}
+              </div>
+
+              {noteTab === "text" ? (
+                <textarea value={note} onChange={e => setNote(e.target.value)} rows={3}
+                  placeholder="참여자 면담 중 확인한 특이사항, 가족·건강 상황, 담당자 의견 등을 적으면 보완 계획에 반영됩니다."
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 11, fontSize: 12, fontFamily: "inherit", outline: "none", resize: "none",
+                    background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)", lineHeight: 1.6 }} />
+              ) : (
+                <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "18px 12px", borderRadius: 11, cursor: "pointer",
+                  background: "var(--surface)", border: "1.5px dashed " + color + "66", textAlign: "center" }}>
+                  <input type="file" multiple onChange={addFiles} style={{ display: "none" }} />
+                  <span style={{ color }}><I.Upload size={22} /></span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}>파일 선택 (파일명이 참고 자료로 기록됩니다)</span>
+                  <span style={{ fontSize: 10, color: "var(--muted)" }}>면담 기록, 상담 일지, 자격증 사본 등</span>
+                </label>
+              )}
+
+              {files && files.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+                  {files.map((f, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 9, background: "var(--surface)", border: "1px solid var(--border)" }}>
+                      <span style={{ color, flex: "0 0 auto" }}><I.Doc size={14} /></span>
+                      <span style={{ flex: 1, minWidth: 0, fontSize: 11, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+                      <span style={{ fontSize: 10, color: "var(--muted)", flex: "0 0 auto" }}>{fmtSize(f.size)}</span>
+                      <button onClick={() => setFiles(files.filter((_, j) => j !== i))}
+                        style={{ fontSize: 13, lineHeight: 1, padding: "0 2px", border: "none", cursor: "pointer", background: "transparent", color: "var(--muted)", flex: "0 0 auto" }}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {(note.trim() || (files && files.length > 0)) && (
+                <div style={{ marginTop: 12 }}>
+                  <Button variant="program" color={color} full icon={<I.Analysis size={18} />} onClick={onRun}>추가 자료로 보완 분석</Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 자활 경로 선택 ──
+function PathSelect({ selected, setSelected, customText, setCustomText }) {
+  const paths = [
+    { value: "안정형", icon: "🛡", desc: "정리 정돈, 재고 관리 등 독립적 업무 중심" },
+    { value: "도전형", icon: "🚀", desc: "고객 응대, 신규 업무 도전 중심" },
+    { value: "절충형", icon: "⚖", desc: "후방 지원 + 제한된 대면 업무 혼합" },
+  ];
+  return (
+    <div style={{ borderRadius: 16, overflow: "hidden", background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: "var(--accent-soft)", borderBottom: "1px solid var(--border)", color: "var(--accent)" }}>
+        <I.Route size={16} />
+        <span style={{ fontSize: 12, fontWeight: 700 }}>자활 경로 선택</span>
+        <span style={{ fontSize: 10, color: "var(--muted)" }}>내일로 분석에 반영됩니다</span>
+      </div>
+      <div style={{ padding: 16 }}>
+        <p style={{ fontSize: 12, marginBottom: 12, color: "var(--text-secondary)" }}>오늘은 분석에서 도출된 직무 배치 전략 중 참여자에게 적합한 경로를 선택해 주세요.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {paths.map(p => {
+            const on = selected === p.value;
+            return (
+              <button key={p.value} onClick={() => { setSelected(p.value); setCustomText(""); }}
+                style={{ width: "100%", textAlign: "left", padding: 13, borderRadius: 13, cursor: "pointer", fontFamily: "inherit",
+                  display: "flex", alignItems: "flex-start", gap: 12, transition: "all var(--dur-fast) var(--ease)",
+                  background: on ? "var(--accent-soft)" : "var(--bg)", border: `1px solid ${on ? "var(--accent)" : "var(--border)"}` }}>
+                <span style={{ fontSize: 16, marginTop: 1 }}>{p.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: on ? "var(--accent)" : "var(--text)" }}>{p.value}</span>
+                    {on && <span style={{ color: "var(--accent)" }}><I.CheckCircle size={15} /></span>}
+                  </div>
+                  <p style={{ fontSize: 10, marginTop: 3, color: "var(--muted)" }}>{p.desc}</p>
+                </div>
               </button>
-            )}
+            );
+          })}
+        </div>
+
+        <button onClick={() => setSelected("custom")}
+          style={{ width: "100%", textAlign: "left", padding: 13, marginTop: 8, borderRadius: 13, cursor: "pointer", fontFamily: "inherit",
+            display: "flex", alignItems: "flex-start", gap: 12, transition: "all var(--dur-fast) var(--ease)",
+            background: selected === "custom" ? "var(--accent-soft)" : "var(--bg)", border: `1px solid ${selected === "custom" ? "var(--accent)" : "var(--border)"}` }}>
+          <span style={{ fontSize: 16, marginTop: 1 }}>✏️</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", color: selected === "custom" ? "var(--accent)" : "var(--text)" }}>기타 (직접 입력)</span>
+              {selected === "custom" && <span style={{ color: "var(--accent)" }}><I.CheckCircle size={15} /></span>}
+            </div>
+            <p style={{ fontSize: 10, marginTop: 3, color: "var(--muted)" }}>제시된 경로 외 맞춤 자활 경로를 직접 작성</p>
+          </div>
+        </button>
+
+        {selected === "custom" && (
+          <div style={{ marginTop: 8 }}>
+            <textarea value={customText} onChange={e => setCustomText(e.target.value)} rows={3}
+              placeholder="예: 카페 바리스타 직무 배치, 참여자 본인이 희망하는 요리 관련 직종 탐색 병행..."
+              style={{ width: "100%", padding: "11px 13px", borderRadius: 13, fontSize: 12, fontFamily: "inherit", outline: "none", resize: "none",
+                background: "var(--bg)", border: "1px solid var(--accent-border)", color: "var(--text)", lineHeight: 1.6 }} />
+            <p style={{ fontSize: 10, marginTop: 5, color: "var(--muted)" }}>구체적으로 작성할수록 더 정밀한 실행 계획이 설계됩니다.</p>
           </div>
         )}
 
-        {/* ANALYZING 상태: 진행률 */}
-        {state === "analyzing" && (
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Icons.Spinner />
-              <span className="text-xs font-medium" style={{ color: "var(--text)" }}>AI 분석 진행 중...</span>
-            </div>
-            <ProgressBar label={label} progress={progress} color={color} />
-            <p className="text-[10px]" style={{ color: "var(--muted)" }}>약 30초~1분 소요됩니다</p>
-          </div>
-        )}
-
-        {/* ERROR 상태 */}
-        {state === "error" && (
-          <div className="p-4">
-            <div className="rounded-lg p-3 mb-3" style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)" }}>
-              <p className="text-xs font-medium mb-0.5" style={{ color: "var(--error)" }}>분석 오류</p>
-              <p className="text-[10px]" style={{ color: "var(--muted)" }}>{errorMsg}</p>
-            </div>
-            <button
-              onClick={onRun}
-              className="w-full py-2 rounded-lg text-xs font-medium"
-              style={{ background: "var(--surface-hover)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
-            >
-              다시 시도
-            </button>
-          </div>
-        )}
-
-        {/* DONE 상태: 결과 + 다운로드 */}
-        {state === "done" && (
-          <div>
-            {/* 액션 버튼 */}
-            <div className="px-4 pt-3 pb-2 flex gap-2">
-              <button
-                onClick={onDownload}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all"
-                style={{ background: color, color: "#fff" }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-              >
-                <Icons.Download />
-                Word 다운로드
-              </button>
-              <button
-                onClick={onReset}
-                className="px-3 py-2 rounded-lg text-xs transition-all"
-                style={{ background: "var(--surface-hover)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
-              >
-                재분석
-              </button>
-            </div>
-
-            {/* 결과 본문 */}
-            <div
-              className="px-4 pb-4 pt-2 text-sm leading-relaxed max-h-96 overflow-y-auto"
-              style={{ color: "var(--text-secondary)", scrollbarWidth: "thin" }}
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(result) }}
-            />
+        {selected && (
+          <div style={{ marginTop: 12, padding: "9px 12px", borderRadius: 11, display: "flex", alignItems: "center", gap: 8, background: "var(--accent-soft)", border: "1px solid var(--accent-border)" }}>
+            <span style={{ fontSize: 10, color: "var(--accent)" }}>선택된 경로</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text)" }}>{selected === "custom" ? (customText.trim() || "(입력 대기중)") : selected}</span>
           </div>
         )}
       </div>
@@ -721,78 +926,61 @@ function AnalysisCard({ type, label, subtitle, color, colorSoft, result, state, 
   );
 }
 
-// ── 참여자 상세 & 분석 화면 ──
+// ── 참여자 상세 & 분석 ──
 function ParticipantDetail({ response, onBack, gasUrl, geminiKey, claudeKey }) {
-  // 오늘은 상태
   const [oneulState, setOneulState] = useState("idle");
   const [oneulResult, setOneulResult] = useState("");
   const [oneulProgress, setOneulProgress] = useState(0);
   const [oneulError, setOneulError] = useState("");
 
-  // 자활 경로 선택 상태
-  const [selectedPath, setSelectedPath] = useState(""); // "안정형" | "도전형" | "절충형" | "custom"
+  const [selectedPath, setSelectedPath] = useState("");
   const [customPath, setCustomPath] = useState("");
 
-  // 내일로 상태
   const [naeirState, setNaeirState] = useState("idle");
   const [naeirResult, setNaeirResult] = useState("");
   const [naeirProgress, setNaeirProgress] = useState(0);
   const [naeirError, setNaeirError] = useState("");
 
-  // 설문 응답을 텍스트로 변환
+  const [naeirNote, setNaeirNote] = useState("");
+  const [naeirFiles, setNaeirFiles] = useState([]);
+
+  const resolvedPath = selectedPath === "custom" ? customPath.trim() : selectedPath;
+
   const formatResponseData = () => {
     let text = `참여자 코드번호: ${response.code}\n소속: ${response.org}\n설문 응답일: ${response.timestamp}\n\n`;
     Object.entries(response.answers).forEach(([q, a]) => {
-      const qIdx = parseInt(q);
-      const label = QUESTION_MAP[qIdx] || `질문 ${q}`;
+      const label = QUESTION_MAP[parseInt(q)] || `질문 ${q}`;
       text += `${label}\n→ ${a}\n\n`;
     });
     return text;
   };
 
-  // 데모 응답 반환
-  const getDemoResponse = (type) => {
-    return type === "oneul"
-      ? `## Part 1. 심층 DNA 분석\n\n### 1. 참여자 성향 심층 프로필 (DNA)\n\n이 참여자는 내면으로 에너지를 수렴시키는 성향으로, 외부 자극보다 내적 세계의 질서와 조화를 우선하는 인지 구조를 지니고 있다. 세상을 대하는 일차적 방어기제는 '감정 차단'이다. 타인의 감정에는 깊이 공명하면서도 정작 자신의 고통에 대해서는 인식 자체를 차단하는 패턴이 반복적으로 나타난다.\n\n기저 동기는 '안전한 연결'에 대한 갈망이다. 표면적으로는 독립적이고 자족적인 모습을 유지하지만, 그 이면에는 타인에게 짐이 되지 않으면서도 깊이 연결되고 싶은 모순적 욕구가 작동하고 있다.\n\n### 2. 인생 그래프 심층 서사 (Story)\n\n참여자가 선택한 단편적 지표들은 하나의 명확한 패턴으로 수렴한다. 가족과의 정서적 교류가 삶의 정점이었고, 심신의 고통이 삶의 저점이었다는 것. 이 두 축은 우연이 아닌 인과로 연결된다.\n\n가장 힘든 시간을 '고립'으로 버텼다는 응답은 핵심적 단서이다. 이것은 단순한 회피가 아니라, 고통을 드러내면 관계가 파괴될 것이라는 무의식적 믿음 체계의 발현이다.\n\n### 3. SWOT 심리 및 역량 진단\n\n> 강점(S)\n- 타인의 감정 상태를 빠르게 포착하는 높은 정서 지능\n- 목표 설정 후 포기하지 않는 집요한 완수 역량\n\n> 약점(W)\n- 자기 감정 표현의 만성적 억제\n- 도움 요청을 자존감 훼손으로 인식하는 경직된 신념\n\n> 기회(O)\n- 안정적 환경에서의 신뢰 관계 형성 가능성\n- 섬세한 감수성을 활용한 서비스/돌봄 직무 적합성\n\n> 위협(T)\n- 장기 고립 시 감정 폭발 또는 무력감으로의 급격한 전환\n- 완벽주의적 기준으로 인한 자기 비하 사이클\n\n### 4. IAP 개인별 자립지원 계획 설계\n\n> IAP 설계 목적: 안전한 관계 경험을 통해 고립이라는 생존 기제를 점진적으로 해제하고, 정서 지능을 자활 직무 역량으로 전환하는 것\n\n- 핵심 방향성\n  - 1년차: 신뢰할 수 있는 단 한 명의 관계 구축 + 규칙적 출퇴근 안정화\n  - 2년차: 소규모 팀 협업 경험 + 직무 기술 습득\n  - 3년차: 자립 경로 확정 및 독립 준비\n\n- 직무 배치 전략\n  - 안정형: 정리 정돈, 재고 관리 등 독립적 업무\n  - 도전형: 고객 응대가 포함된 서비스 업무\n  - 절충형: 후방 지원 + 제한된 대면 업무`
-      : `### 1. 3년 자활 로드맵 및 당해 연도 분기별 계획\n\n> '고립이라는 오래된 생존 전략을 내려놓고, 안전한 연결 속에서 나만의 속도로 자립의 길을 걸어가는 3년의 여정'\n\n- [1년차 핵심 목표]: 안정적 근태 확립과 신뢰 관계 1인 형성\n  - 1분기: 주 5일 출근 루틴 정착, 담당자와 주 1회 5분 대화 시작\n  - 2분기: 직무 기초 교육 참여, 팀 내 인사 나누기 실천\n  - 3분기: 소규모 협업 과제 1회 참여, 감정 일기 주 2회 작성\n  - 4분기: 1년차 성찰 및 2년차 목표 공동 설정\n\n- [2년차 핵심 목표]: 직무 역량 강화 및 팀 내 역할 확대\n- [3년차 핵심 목표]: 자립 경로 확정 및 외부 취업/창업 준비\n\n### 2. 당월 실천 계획 및 모더레이션 지표\n\n- 당월 핵심 목표: 주 5일 출근 유지 + 담당자와 주 1회 자연스러운 대화\n- 직무 실천: 내일 출근 후 작업 공간을 10분간 정리하고, 오늘 할 일 1가지를 메모지에 적어 붙이기\n- 생활 실천: 매일 아침 창문을 열고 바깥 공기를 5분간 마시며 심호흡하기\n- 위험 통제 지표: 3일 연속 점심을 혼자 먹으면 담당자에게 먼저 말 한마디 건네기\n\n### 3. 주간 모니터링 일지 및 월말 동적 점검표\n\n- [ ] 환경 안정 (근태): 이번 주 5일 중 몇 일 출근했나요?\n- [ ] 위험 관리 (방어막 유지): 혼자 있고 싶은 충동이 3일 이상 지속되지는 않았나요?\n- [ ] 당월 실천 (루틴/목표): 아침 심호흡과 작업 공간 정리를 실천했나요?\n- 금주 상담/성찰 주제: __________________________________________________\n- 감정 상태: ( ) 긍정 / ( ) 보통 / ( ) 부정 / ( ) 에너지 고갈\n- 슈퍼바이저 월말 평가: 당월 달성도 및 차월 목표 변경안 기재`;
-  };
+  const getDemoResponse = (type) => type === "oneul" ? DEMO_ONEUL : DEMO_NAEIRO;
 
-  // Google Gemini API 호출 (오늘은 분석용)
+  // Google Gemini (오늘은)
   const callGemini = async (systemPrompt, userMessage) => {
-    if (!geminiKey) {
-      return new Promise((resolve) => setTimeout(() => resolve(getDemoResponse("oneul")), 3000));
-    }
-
+    if (!geminiKey) return new Promise(resolve => setTimeout(() => resolve(getDemoResponse("oneul")), 2500));
     const res = await fetch(`${CONFIG.GEMINI_API_URL}?key=${geminiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: "user", parts: [{ text: userMessage }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 8192,
-        },
+        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
       }),
     });
-
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       throw new Error(errData.error?.message || `Gemini API 오류 (${res.status})`);
     }
-
     const data = await res.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) throw new Error("Gemini API에서 응답을 받지 못했습니다");
     return text;
   };
 
-  // Claude API 호출 (내일로 분석용)
+  // Claude (내일로)
   const callClaude = async (systemPrompt, userMessage) => {
-    if (!claudeKey) {
-      return new Promise((resolve) => setTimeout(() => resolve(getDemoResponse("naeir")), 3000));
-    }
-
+    if (!claudeKey) return new Promise(resolve => setTimeout(() => resolve(getDemoResponse("naeir")), 2500));
     const res = await fetch(CONFIG.CLAUDE_API_URL, {
       method: "POST",
       headers: {
@@ -801,92 +989,55 @@ function ParticipantDetail({ response, onBack, gasUrl, geminiKey, claudeKey }) {
         "anthropic-version": "2023-06-01",
         "anthropic-dangerous-direct-browser-access": "true",
       },
-      body: JSON.stringify({
-        model: CONFIG.CLAUDE_MODEL,
-        max_tokens: 8192,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userMessage }],
-      }),
+      body: JSON.stringify({ model: CONFIG.CLAUDE_MODEL, max_tokens: 8192, system: systemPrompt, messages: [{ role: "user", content: userMessage }] }),
     });
-
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       throw new Error(errData.error?.message || `Claude API 오류 (${res.status})`);
     }
-
     const data = await res.json();
     const text = data.content?.[0]?.text;
     if (!text) throw new Error("Claude API에서 응답을 받지 못했습니다");
     return text;
   };
 
-  // 오늘은 분석 실행
   const runOneul = async () => {
-    setOneulState("analyzing");
-    setOneulProgress(0);
-    setOneulError("");
+    setOneulState("analyzing"); setOneulProgress(0); setOneulError("");
     try {
       const responseData = formatResponseData();
-      const timer = setInterval(() => setOneulProgress((p) => Math.min(p + 5, 90)), 500);
+      const timer = setInterval(() => setOneulProgress(p => Math.min(p + 5, 90)), 500);
       const result = await callGemini(ONEUL_PROMPT, `다음 참여자 데이터를 분석해 주십시오.\n\n${responseData}\n\n오늘은 분석해줘`);
       clearInterval(timer);
-      setOneulProgress(100);
-      setOneulResult(result);
-      setOneulState("done");
+      setOneulProgress(100); setOneulResult(result); setOneulState("done");
     } catch (err) {
-      setOneulState("error");
-      setOneulError(err.message);
+      setOneulState("error"); setOneulError(err.message);
     }
-  };
-
-  // 내일로 분석 실행
-  const getSelectedPathText = () => {
-    if (selectedPath === "custom") return customPath;
-    return selectedPath;
   };
 
   const runNaeir = async () => {
-    setNaeirState("analyzing");
-    setNaeirProgress(0);
-    setNaeirError("");
+    setNaeirState("analyzing"); setNaeirProgress(0); setNaeirError("");
     try {
-      const pathText = getSelectedPathText();
+      const pathText = resolvedPath;
+      // 추가 자료 메모/파일명을 보완 컨텍스트로 구성
+      const extras = [];
+      if (naeirNote.trim()) extras.push(`담당자 추가 메모: ${naeirNote.trim()}`);
+      if (naeirFiles.length) extras.push(`첨부 참고 자료(파일명): ${naeirFiles.map(f => f.name).join(", ")}`);
+      const extraBlock = extras.length ? `\n\n=== 추가 반영 자료 ===\n${extras.join("\n")}` : "";
+
       let inputData;
       if (oneulResult) {
-        // 오늘은 결과 + 확정 경로 포함
-        inputData = `=== 심층 분석 리포트 내용 ===\n${oneulResult}\n\n=== 확정된 자활 경로 ===\n${pathText ? `담당자가 선택한 자활 경로: '${pathText}'\n이 경로에 맞춰 3년 로드맵과 실행 계획을 설계하십시오.` : "(오늘은 분석에서 도출된 IAP 내용 기반)"}\n\n위 내용을 바탕으로 내일로 분석해줘`;
+        inputData = `=== 심층 분석 리포트 내용 ===\n${oneulResult}\n\n=== 확정된 자활 경로 ===\n${pathText ? `담당자가 선택한 자활 경로: '${pathText}'\n이 경로에 맞춰 3년 로드맵과 실행 계획을 설계하십시오.` : "(오늘은 분석에서 도출된 IAP 내용 기반)"}${extraBlock}\n\n위 내용을 바탕으로 내일로 분석해줘`;
       } else {
-        // 오늘은 없이 설문 데이터만으로 실행
         const responseData = formatResponseData();
-        inputData = `다음 참여자 데이터를 바탕으로 실행 계획을 설계해 주십시오.\n\n${responseData}\n\n${pathText ? `담당자가 선택한 자활 경로: '${pathText}'\n이 경로에 맞춰 설계하십시오.\n\n` : ""}내일로 분석해줘`;
+        inputData = `다음 참여자 데이터를 바탕으로 실행 계획을 설계해 주십시오.\n\n${responseData}\n\n${pathText ? `담당자가 선택한 자활 경로: '${pathText}'\n이 경로에 맞춰 설계하십시오.\n\n` : ""}${extraBlock}\n\n내일로 분석해줘`;
       }
-      const timer = setInterval(() => setNaeirProgress((p) => Math.min(p + 5, 90)), 500);
+      const timer = setInterval(() => setNaeirProgress(p => Math.min(p + 5, 90)), 500);
       const result = await callClaude(NAEIRO_PROMPT, inputData);
       clearInterval(timer);
-      setNaeirProgress(100);
-      setNaeirResult(result);
-      setNaeirState("done");
+      setNaeirProgress(100); setNaeirResult(result); setNaeirState("done");
     } catch (err) {
-      setNaeirState("error");
-      setNaeirError(err.message);
+      setNaeirState("error"); setNaeirError(err.message);
     }
-  };
-
-  // 개별 Word 다운로드
-  const downloadOneulWord = () => {
-    const report = `# 프로젝트 내일로 - 심층 DNA 분석 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n\n---\n\n${oneulResult}\n\n---\n\n> 충북청주지역자활센터 프로젝트 내일로 ${CONFIG.APP_VERSION}\n> 오늘은 프롬프트: 심층 심리 및 서사 분석`;
-    downloadAsWord(report, `오늘은_분석_${response.code}`);
-  };
-
-  const downloadNaeirWord = () => {
-    const report = `# 프로젝트 내일로 - 실행 계획 설계 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n\n---\n\n${naeirResult}\n\n---\n\n> 충북청주지역자활센터 프로젝트 내일로 ${CONFIG.APP_VERSION}\n> 내일로 프롬프트: 구체적 실행 계획 수립`;
-    downloadAsWord(report, `내일로_분석_${response.code}`);
-  };
-
-  // 통합 Word 다운로드
-  const downloadIntegratedWord = () => {
-    const report = `# 프로젝트 내일로 종합 분석 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n\n---\n\n## Part 1. 심층 DNA 분석 (오늘은)\n\n${oneulResult}\n\n---\n\n## Part 2. 실행 계획 설계 (내일로)\n\n${naeirResult}\n\n---\n\n> 본 리포트는 2개의 독립적인 AI 분석 프롬프트를 통해 생성되었습니다.\n> - 오늘은 프롬프트: 심층 심리 및 서사 분석\n> - 내일로 프롬프트: 구체적 실행 계획 수립\n>\n> 충북청주지역자활센터 프로젝트 내일로 ${CONFIG.APP_VERSION}`;
-    downloadAsWord(report, `내일로_종합리포트_${response.code}`);
   };
 
   const downloadAsWord = (markdown, filename) => {
@@ -900,7 +1051,7 @@ function ParticipantDetail({ response, onBack, gasUrl, geminiKey, claudeKey }) {
         hr { border: none; border-top: 1px solid #e2e8f0; margin: 16pt 0; }
       </style></head>
       <body>${renderMarkdown(markdown)}</body></html>`;
-    const blob = new Blob(["\ufeff", htmlContent], { type: "application/msword" });
+    const blob = new Blob(["﻿", htmlContent], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -909,235 +1060,79 @@ function ParticipantDetail({ response, onBack, gasUrl, geminiKey, claudeKey }) {
     URL.revokeObjectURL(url);
   };
 
+  const downloadOneulWord = () => {
+    const report = `# 프로젝트 내일로 - 심층 DNA 분석 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n\n---\n\n${oneulResult}\n\n---\n\n> 충북청주지역자활센터 프로젝트 내일로 ${CONFIG.APP_VERSION}\n> 오늘은 프롬프트: 심층 심리 및 서사 분석`;
+    downloadAsWord(report, `오늘은_분석_${response.code}`);
+  };
+
+  const downloadNaeirWord = () => {
+    const report = `# 프로젝트 내일로 - 실행 계획 설계 리포트\n\n참여자: ${response.code}\n소속: ${response.org}\n분석일: ${new Date().toLocaleDateString("ko-KR")}\n\n---\n\n${naeirResult}\n\n---\n\n> 충북청주지역자활센터 프로젝트 내일로 ${CONFIG.APP_VERSION}\n> 내일로 프롬프트: 구체적 실행 계획 수립`;
+    downloadAsWord(report, `내일로_분석_${response.code}`);
+  };
+
   const bothDone = oneulState === "done" && naeirState === "done";
 
   return (
     <div>
-      {/* 헤더 */}
-      <div className="flex items-center gap-3 mb-5">
-        <button
-          onClick={onBack}
-          className="p-2 rounded-lg transition-colors"
-          style={{ color: "var(--text-secondary)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-hover)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-        >
-          <Icons.Back />
-        </button>
-        <div className="flex-1">
-          <h2 className="text-lg font-bold" style={{ color: "var(--heading)" }}>{response.code}</h2>
-          <p className="text-xs" style={{ color: "var(--muted)" }}>{response.org} &middot; {response.timestamp}</p>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <button onClick={onBack} style={{ padding: 8, borderRadius: 13, border: "none", background: "transparent", cursor: "pointer", color: "var(--text-secondary)" }}><I.Back size={18} /></button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--heading)" }}>{response.code}</h2>
+          <p style={{ fontSize: 12, color: "var(--muted)" }}>{response.org} · {response.timestamp}</p>
         </div>
-        {/* 분석 상태 뱃지 */}
-        <div className="flex gap-1">
-          {oneulState === "done" && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(167,139,250,0.12)", color: "var(--oneul)" }}>오늘은</span>
-          )}
-          {naeirState === "done" && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(52,211,153,0.12)", color: "var(--naeiro)" }}>내일로</span>
-          )}
+        <div style={{ display: "flex", gap: 6 }}>
+          {oneulState === "done" && <Badge tone="oneul">오늘은</Badge>}
+          {naeirState === "done" && <Badge tone="naeiro">내일로</Badge>}
         </div>
       </div>
 
-      {/* 설문 응답 요약 (접이식) */}
-      <details className="rounded-xl mb-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <summary className="px-4 py-3 text-sm font-semibold cursor-pointer select-none" style={{ color: "var(--text-secondary)" }}>
-          설문 응답 요약 (17문항)
-        </summary>
-        <div className="px-4 pb-3 space-y-2 max-h-48 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
-          {Object.entries(response.answers).map(([q, a]) => {
-            const qIdx = parseInt(q);
-            return (
-              <div key={q} className="text-xs">
-                <span style={{ color: "var(--accent)" }}>{QUESTION_MAP[qIdx]?.split(".")[0]}.</span>{" "}
-                <span style={{ color: "var(--text-secondary)" }}>{a.length > 60 ? a.slice(0, 60) + "..." : a}</span>
-              </div>
-            );
-          })}
+      <details style={{ borderRadius: 16, marginBottom: 16, background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)" }}>
+        <summary style={{ padding: "12px 16px", fontSize: 14, fontWeight: 600, cursor: "pointer", color: "var(--text-secondary)", listStyle: "none" }}>설문 응답 요약 (17문항)</summary>
+        <div style={{ padding: "0 16px 12px", display: "flex", flexDirection: "column", gap: 8, maxHeight: 200, overflowY: "auto" }}>
+          {Object.entries(response.answers).map(([q, a]) => (
+            <div key={q} style={{ fontSize: 12 }}>
+              <span style={{ color: "var(--accent)" }}>{QUESTION_MAP[parseInt(q)]?.split(".")[0]}.</span>{" "}
+              <span style={{ color: "var(--text-secondary)" }}>{a.length > 60 ? a.slice(0, 60) + "..." : a}</span>
+            </div>
+          ))}
         </div>
       </details>
 
-      {/* ── 다운로드 센터 (둘 다 완료 시) ── */}
       {bothDone && (
-        <DownloadCenter
-          response={response}
-          oneulResult={oneulResult}
-          naeirResult={naeirResult}
-          selectedPath={selectedPath === "custom" ? customPath : selectedPath}
-          gasUrl={gasUrl}
-          downloadAsWord={downloadAsWord}
-        />
+        <DownloadCenter response={response} oneulResult={oneulResult} naeirResult={naeirResult}
+          selectedPath={resolvedPath} gasUrl={gasUrl} downloadAsWord={downloadAsWord} />
       )}
 
-      {/* 오늘은 분석 카드 */}
-      <div className="mb-3">
-        <AnalysisCard
-          type="oneul"
-          label="오늘은"
-          subtitle="심층 DNA 분석"
-          color="var(--oneul)"
-          colorSoft="rgba(167,139,250,0.06)"
-          result={oneulResult}
-          state={oneulState}
-          progress={oneulProgress}
-          errorMsg={oneulError}
-          onRun={runOneul}
-          onReset={() => { setOneulState("idle"); setOneulResult(""); setSelectedPath(""); setCustomPath(""); }}
-          onDownload={downloadOneulWord}
-          disabled={false}
-          disabledReason=""
-        />
+      <div style={{ marginBottom: 12 }}>
+        <AnalysisCard label="오늘은" subtitle="심층 DNA 분석" color="var(--oneul)" colorSoft="var(--oneul-soft)"
+          desc="참여자의 심리 성향, 인생 서사, SWOT 진단, IAP 계획을 분석합니다."
+          result={oneulResult} state={oneulState} progress={oneulProgress} errorMsg={oneulError}
+          onRun={runOneul} onReset={() => { setOneulState("idle"); setOneulResult(""); setSelectedPath(""); setCustomPath(""); setNaeirNote(""); setNaeirFiles([]); }}
+          onDownload={downloadOneulWord} />
       </div>
 
-      {/* ── 자활 경로 선택 UI (오늘은 완료 후 표시) ── */}
       {oneulState === "done" && naeirState !== "done" && (
-        <div className="mb-3 rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-          {/* 헤더 */}
-          <div className="px-4 py-3 flex items-center gap-2.5" style={{ background: "rgba(91,141,239,0.06)", borderBottom: "1px solid var(--border)" }}>
-            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4" style={{ color: "var(--accent)" }}>
-              <path d="M10 2L3 7v6l7 5 7-5V7l-7-5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-              <path d="M10 12V8m0 0L7 10m3-2l3 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <div>
-              <span className="text-xs font-bold" style={{ color: "var(--accent)" }}>자활 경로 선택</span>
-              <span className="text-[10px] ml-2" style={{ color: "var(--muted)" }}>내일로 분석에 반영됩니다</span>
-            </div>
-          </div>
-
-          <div className="p-4" style={{ background: "var(--surface)" }}>
-            <p className="text-xs mb-3" style={{ color: "var(--text-secondary)" }}>
-              오늘은 분석에서 도출된 직무 배치 전략 중 참여자에게 적합한 경로를 선택해 주세요.
-            </p>
-
-            {/* 3가지 기본 경로 */}
-            <div className="space-y-2 mb-3">
-              {[
-                { value: "안정형", icon: "🛡", desc: "정리 정돈, 재고 관리 등 독립적 업무 중심" },
-                { value: "도전형", icon: "🚀", desc: "고객 응대, 신규 업무 도전 중심" },
-                { value: "절충형", icon: "⚖", desc: "후방 지원 + 제한된 대면 업무 혼합" },
-              ].map((path) => (
-                <button
-                  key={path.value}
-                  onClick={() => { setSelectedPath(path.value); setCustomPath(""); }}
-                  className="w-full text-left p-3 rounded-lg transition-all duration-150 flex items-start gap-3"
-                  style={{
-                    background: selectedPath === path.value ? "var(--accent-soft)" : "var(--bg)",
-                    border: `1px solid ${selectedPath === path.value ? "var(--accent)" : "var(--border)"}`,
-                  }}
-                >
-                  <span className="text-base mt-0.5">{path.icon}</span>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold" style={{ color: selectedPath === path.value ? "var(--accent)" : "var(--text)" }}>
-                        {path.value}
-                      </span>
-                      {selectedPath === path.value && (
-                        <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" style={{ color: "var(--accent)" }}>
-                          <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.5" />
-                          <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                        </svg>
-                      )}
-                    </div>
-                    <p className="text-[10px] mt-0.5" style={{ color: "var(--muted)" }}>{path.desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* 기타 직접 입력 */}
-            <div>
-              <button
-                onClick={() => setSelectedPath("custom")}
-                className="w-full text-left p-3 rounded-lg transition-all duration-150"
-                style={{
-                  background: selectedPath === "custom" ? "var(--accent-soft)" : "var(--bg)",
-                  border: `1px solid ${selectedPath === "custom" ? "var(--accent)" : "var(--border)"}`,
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-base">✏️</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold" style={{ color: selectedPath === "custom" ? "var(--accent)" : "var(--text)" }}>
-                      기타 (직접 입력)
-                    </span>
-                    {selectedPath === "custom" && (
-                      <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" style={{ color: "var(--accent)" }}>
-                        <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.5" />
-                        <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-              </button>
-
-              {selectedPath === "custom" && (
-                <div className="mt-2">
-                  <textarea
-                    value={customPath}
-                    onChange={(e) => setCustomPath(e.target.value)}
-                    placeholder="예: 카페 바리스타 직무 배치, 참여자 본인이 희망하는 요리 관련 직종 탐색 병행..."
-                    rows={3}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs outline-none resize-none"
-                    style={{
-                      background: "var(--bg)",
-                      border: "1px solid var(--accent-border)",
-                      color: "var(--text)",
-                    }}
-                  />
-                  <p className="text-[10px] mt-1" style={{ color: "var(--muted)" }}>
-                    구체적으로 작성할수록 더 정밀한 실행 계획이 설계됩니다
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* 선택 상태 표시 */}
-            {selectedPath && (
-              <div className="mt-3 px-3 py-2 rounded-lg flex items-center gap-2" style={{ background: "rgba(91,141,239,0.05)", border: "1px solid rgba(91,141,239,0.1)" }}>
-                <span className="text-[10px]" style={{ color: "var(--accent)" }}>선택된 경로:</span>
-                <span className="text-[10px] font-semibold" style={{ color: "var(--text)" }}>
-                  {selectedPath === "custom" ? (customPath || "(입력 대기중)") : selectedPath}
-                </span>
-              </div>
-            )}
-          </div>
+        <div style={{ marginBottom: 12 }}>
+          <PathSelect selected={selectedPath} setSelected={setSelectedPath} customText={customPath} setCustomText={setCustomPath} />
         </div>
       )}
 
-      {/* 내일로 분석 카드 */}
-      <div className="mb-3">
-        <AnalysisCard
-          type="naeir"
-          label="내일로"
-          subtitle="실행 계획 설계"
-          color="var(--naeiro)"
-          colorSoft="rgba(52,211,153,0.06)"
-          result={naeirResult}
-          state={naeirState}
-          progress={naeirProgress}
-          errorMsg={naeirError}
-          onRun={runNaeir}
-          onReset={() => { setNaeirState("idle"); setNaeirResult(""); }}
-          onDownload={downloadNaeirWord}
-          disabled={false}
-          disabledReason=""
-        />
+      <div style={{ marginBottom: 12 }}>
+        <AnalysisCard label="내일로" subtitle="실행 계획 설계" color="var(--naeiro)" colorSoft="var(--naeiro-soft)"
+          desc="선택한 자활 경로와 추가 메모를 반영해 3년 자활 로드맵, 당월 실천 계획, 주간 모니터링 일지를 설계합니다."
+          result={naeirResult} state={naeirState} progress={naeirProgress} errorMsg={naeirError}
+          context={naeirState !== "idle" && resolvedPath ? resolvedPath : null}
+          showNote note={naeirNote} setNote={setNaeirNote} files={naeirFiles} setFiles={setNaeirFiles}
+          onRun={runNaeir} onReset={() => setNaeirState("idle")} onDownload={downloadNaeirWord} />
       </div>
 
-      {/* 안내 메시지 */}
-      {oneulState === "done" && naeirState === "idle" && !selectedPath && (
-        <div className="rounded-lg p-3 flex items-start gap-2" style={{ background: "rgba(91,141,239,0.05)", border: "1px solid rgba(91,141,239,0.12)" }}>
-          <span className="text-sm mt-0.5">☝️</span>
-          <p className="text-xs" style={{ color: "var(--accent)" }}>
-            오늘은 분석이 완료되었습니다. 위에서 자활 경로를 선택한 후 내일로 분석을 실행하면, 해당 경로에 맞춘 정밀한 실행 계획이 설계됩니다.
-          </p>
-        </div>
-      )}
-      {oneulState === "done" && naeirState === "idle" && selectedPath && (
-        <div className="rounded-lg p-3 flex items-start gap-2" style={{ background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.12)" }}>
-          <span className="text-sm mt-0.5">✅</span>
-          <p className="text-xs" style={{ color: "var(--naeiro)" }}>
-            '{selectedPath === "custom" ? (customPath || "기타") : selectedPath}' 경로가 선택되었습니다. 내일로 분석 시작 버튼을 눌러주세요.
+      {oneulState === "done" && naeirState === "idle" && (
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, borderRadius: 13, padding: 12,
+          background: resolvedPath ? "rgba(46,158,120,.06)" : "var(--accent-soft)", border: `1px solid ${resolvedPath ? "rgba(46,158,120,.18)" : "var(--accent-border)"}` }}>
+          <span style={{ fontSize: 13 }}>{resolvedPath ? "✅" : "☝️"}</span>
+          <p style={{ fontSize: 12, color: resolvedPath ? "var(--naeiro)" : "var(--accent)" }}>
+            {resolvedPath ? `'${resolvedPath}' 경로가 선택되었습니다. 내일로 분석 시작 버튼을 눌러주세요.`
+                          : "오늘은 분석이 완료되었습니다. 위에서 자활 경로를 선택한 후 내일로 분석을 실행하세요."}
           </p>
         </div>
       )}
@@ -1153,143 +1148,78 @@ function SettingsModal({ show, onClose, gasUrl, setGasUrl, geminiKey, setGeminiK
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [showClaudeKey, setShowClaudeKey] = useState(false);
 
+  useEffect(() => {
+    if (show) { setTempUrl(gasUrl); setTempGeminiKey(geminiKey); setTempClaudeKey(claudeKey); }
+  }, [show]);
+
   if (!show) return null;
 
   const ApiKeyField = ({ label, color, icon, value, onChange, showKey, toggleShow, placeholder, description }) => (
-    <div className="mb-4">
-      <div className="flex items-center gap-2 mb-1.5">
-        <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-        <label className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
-          {label}
-        </label>
-        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: color + "1A", color }}>{icon}</span>
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span style={{ width: 8, height: 8, borderRadius: 999, background: color }} />
+        <label style={{ fontSize: 12, fontWeight: 500, color: "var(--text-secondary)" }}>{label}</label>
+        <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: color + "1A", color }}>{icon}</span>
       </div>
-      <div className="relative">
-        <input
-          type={showKey ? "text" : "password"}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          className="w-full px-3 py-2 pr-16 rounded-lg text-xs outline-none"
-          style={{ background: "var(--bg)", border: `1px solid ${value ? color + "44" : "var(--border)"}`, color: "var(--text)" }}
-        />
-        <button
-          onClick={toggleShow}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] px-2 py-0.5 rounded"
-          style={{ color: "var(--muted)", background: "var(--surface-active)" }}
-        >
+      <div style={{ position: "relative" }}>
+        <input type={showKey ? "text" : "password"} value={value} onChange={onChange} placeholder={placeholder}
+          style={{ width: "100%", padding: "9px 56px 9px 12px", borderRadius: 13, fontSize: 12, fontFamily: "inherit", outline: "none", background: "var(--bg)", border: `1px solid ${value ? color + "55" : "var(--border)"}`, color: "var(--text)" }} />
+        <button onClick={toggleShow}
+          style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 10, padding: "2px 8px", borderRadius: 6, border: "none", cursor: "pointer", color: "var(--muted)", background: "var(--surface-active)" }}>
           {showKey ? "숨기기" : "보기"}
         </button>
       </div>
-      <p className="text-[10px] mt-1" style={{ color: "var(--muted)" }}>{description}</p>
+      <p style={{ fontSize: 10, marginTop: 4, color: "var(--muted)" }}>{description}</p>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }}>
-      <div className="w-full max-w-md rounded-2xl overflow-hidden" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        {/* 헤더 */}
-        <div className="px-6 pt-5 pb-3">
-          <h3 className="text-base font-bold" style={{ color: "var(--heading)" }}>시스템 설��</h3>
-          <p className="text-[10px] mt-1" style={{ color: "var(--muted)" }}>각 분석 엔진의 API Key를 설정합니다</p>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "var(--scrim)" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, maxHeight: "90vh", overflowY: "auto", borderRadius: 20, background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-modal)" }}>
+        <div style={{ padding: "20px 24px 12px" }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--heading)" }}>시스템 설정</h3>
+          <p style={{ fontSize: 10, marginTop: 4, color: "var(--muted)" }}>각 분석 엔진의 API Key를 설정합니다</p>
         </div>
-
-        {/* AI 엔진 설정 영역 */}
-        <div className="px-6 pb-2">
-          <div className="rounded-xl p-3 mb-3" style={{ background: "var(--bg)", border: "1px solid var(--border-light)" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs">🔮</span>
-              <span className="text-[10px] font-bold" style={{ color: "var(--text-secondary)" }}>AI 분석 엔진 구성</span>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[10px]">
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--oneul)" }} />
-                <span style={{ color: "var(--oneul)" }}>오늘은</span>
-                <span style={{ color: "var(--muted)" }}>심층 DNA 분��</span>
-                <span className="ml-auto px-1.5 py-0.5 rounded" style={{ background: "rgba(167,139,250,0.1)", color: "var(--oneul)" }}>Google Gemini</span>
-              </div>
-              <div className="flex items-center gap-2 text-[10px]">
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--naeiro)" }} />
-                <span style={{ color: "var(--naeiro)" }}>내일로</span>
-                <span style={{ color: "var(--muted)" }}>실행 계획 설계</span>
-                <span className="ml-auto px-1.5 py-0.5 rounded" style={{ background: "rgba(52,211,153,0.1)", color: "var(--naeiro)" }}>Claude AI</span>
-              </div>
+        <div style={{ padding: "0 24px 8px" }}>
+          <div style={{ borderRadius: 16, padding: 12, marginBottom: 14, background: "var(--bg)", border: "1px solid var(--border-light)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}><span>🔮</span><span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-secondary)" }}>AI 분석 엔진 구성</span></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 10 }}><span style={{ width: 6, height: 6, borderRadius: 999, background: "var(--oneul)" }} /><span style={{ color: "var(--oneul)" }}>오늘은</span><span style={{ color: "var(--muted)" }}>심층 DNA 분석</span><span style={{ marginLeft: "auto", padding: "2px 6px", borderRadius: 4, background: "rgba(123,102,214,.1)", color: "var(--oneul)" }}>Google Gemini</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 10 }}><span style={{ width: 6, height: 6, borderRadius: 999, background: "var(--naeiro)" }} /><span style={{ color: "var(--naeiro)" }}>내일로</span><span style={{ color: "var(--muted)" }}>실행 계획 설계</span><span style={{ marginLeft: "auto", padding: "2px 6px", borderRadius: 4, background: "rgba(46,158,120,.1)", color: "var(--naeiro)" }}>Claude AI</span></div>
             </div>
           </div>
 
-          <ApiKeyField
-            label="Google Gemini API Key"
-            color="var(--oneul)"
-            icon="오늘은"
-            value={tempGeminiKey}
-            onChange={(e) => setTempGeminiKey(e.target.value)}
-            showKey={showGeminiKey}
-            toggleShow={() => setShowGeminiKey(!showGeminiKey)}
-            placeholder="AIzaSy..."
-            description="오늘은 분석에 사용 · Google AI Studio에서 발급"
-          />
+          <ApiKeyField label="Google Gemini API Key" color="var(--oneul)" icon="오늘은"
+            value={tempGeminiKey} onChange={e => setTempGeminiKey(e.target.value)} showKey={showGeminiKey} toggleShow={() => setShowGeminiKey(!showGeminiKey)}
+            placeholder="AIzaSy..." description="오늘은 분석에 사용 · Google AI Studio에서 발급" />
 
-          <ApiKeyField
-            label="Claude API Key"
-            color="var(--naeiro)"
-            icon="��일로"
-            value={tempClaudeKey}
-            onChange={(e) => setTempClaudeKey(e.target.value)}
-            showKey={showClaudeKey}
-            toggleShow={() => setShowClaudeKey(!showClaudeKey)}
-            placeholder="sk-ant-..."
-            description="내일로 분석에 사용 · Anthropic Console에서 발급"
-          />
+          <ApiKeyField label="Claude API Key" color="var(--naeiro)" icon="내일로"
+            value={tempClaudeKey} onChange={e => setTempClaudeKey(e.target.value)} showKey={showClaudeKey} toggleShow={() => setShowClaudeKey(!showClaudeKey)}
+            placeholder="sk-ant-..." description="내일로 분석에 사용 · Anthropic Console에서 발급" />
 
-          <div className="mb-4">
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-              GAS 프록시 URL
-            </label>
-            <input
-              type="text"
-              value={tempUrl}
-              onChange={(e) => setTempUrl(e.target.value)}
-              placeholder="https://script.google.com/macros/s/.../exec"
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
-            />
-            <p className="text-[10px] mt-1" style={{ color: "var(--muted)" }}>
-              설문 응답 조회 및 문서 생성에 사용
-            </p>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 500, marginBottom: 6, color: "var(--text-secondary)" }}>GAS 프록시 URL</label>
+            <input value={tempUrl} onChange={e => setTempUrl(e.target.value)} placeholder="https://script.google.com/macros/s/.../exec"
+              style={{ width: "100%", padding: "9px 12px", borderRadius: 13, fontSize: 12, fontFamily: "inherit", outline: "none", background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }} />
+            <p style={{ fontSize: 10, marginTop: 4, color: "var(--muted)" }}>설문 응답 조회 및 문서 생성에 사용</p>
           </div>
-        </div>
 
-        {/* 상태 표시 + 저장 버튼 */}
-        <div className="px-6 pb-5">
-          <div className="flex items-center gap-2 mb-3 text-[10px]" style={{ color: "var(--muted)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, fontSize: 10, color: "var(--muted)" }}>
             <span>{tempGeminiKey ? "🟢" : "🔴"} Gemini</span>
             <span>{tempClaudeKey ? "🟢" : "🔴"} Claude</span>
             <span>{tempUrl ? "🟢" : "🔴"} GAS</span>
-            <span className="ml-auto">미설정 항목은 데모 모드</span>
+            <span style={{ marginLeft: "auto" }}>미설정 항목은 데모 모드</span>
           </div>
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg text-xs"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              취소
-            </button>
-            <button
-              onClick={() => {
-                setGasUrl(tempUrl);
-                setGeminiKey(tempGeminiKey);
-                setClaudeKey(tempClaudeKey);
-                localStorage.setItem("naeilro_gemini_key", tempGeminiKey);
-                localStorage.setItem("naeilro_claude_key", tempClaudeKey);
-                onClose();
-              }}
-              className="px-5 py-2 rounded-lg text-xs font-medium"
-              style={{ background: "var(--accent)", color: "#fff" }}
-            >
-              저장
-            </button>
-          </div>
+        </div>
+        <div style={{ padding: "0 24px 20px", display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <Button variant="ghost" size="sm" onClick={onClose} style={{ border: "none", background: "transparent" }}>취소</Button>
+          <Button variant="primary" size="sm" onClick={() => {
+            setGasUrl(tempUrl); setGeminiKey(tempGeminiKey); setClaudeKey(tempClaudeKey);
+            localStorage.setItem("naeilro_gas_url", tempUrl);
+            localStorage.setItem("naeilro_gemini_key", tempGeminiKey);
+            localStorage.setItem("naeilro_claude_key", tempClaudeKey);
+            onClose();
+          }}>저장</Button>
         </div>
       </div>
     </div>
@@ -1303,16 +1233,15 @@ function App() {
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSettings, setShowSettings] = useState(false);
-  const [gasUrl, setGasUrl] = useState(CONFIG.GAS_PROXY_URL);
+  const [view, setView] = useState("list");
+  const [gasUrl, setGasUrl] = useState(() => localStorage.getItem("naeilro_gas_url") ?? CONFIG.GAS_PROXY_URL);
   const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem("naeilro_gemini_key") || "");
   const [claudeKey, setClaudeKey] = useState(() => localStorage.getItem("naeilro_claude_key") || "");
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
 
-  // GAS에서 실제 설문 응답 불러오기
   const fetchResponses = async (url) => {
-    setLoading(true);
-    setLoadError("");
+    setLoading(true); setLoadError("");
     try {
       const res = await fetch(url + "?action=responses");
       const data = await res.json();
@@ -1329,184 +1258,114 @@ function App() {
     setLoading(false);
   };
 
-  // 로그인 성공 시 데이터 로딩
   const handleLogin = (userData) => {
     setUser(userData);
-    if (gasUrl) {
-      fetchResponses(gasUrl);
-    } else {
-      setResponses(DEMO_RESPONSES);
-    }
+    if (gasUrl) fetchResponses(gasUrl);
+    else setResponses(DEMO_RESPONSES);
   };
 
-  // GAS URL 변경 시 데이터 재로딩
   useEffect(() => {
-    if (user && gasUrl) {
-      fetchResponses(gasUrl);
-    }
+    if (user && gasUrl) fetchResponses(gasUrl);
+    if (user && !gasUrl) setResponses(DEMO_RESPONSES);
   }, [gasUrl]);
 
+  if (!user) return <LoginScreen onLogin={handleLogin} />;
+
+  const demoFlags = { gemini: !geminiKey, claude: !claudeKey, gas: !gasUrl };
+  const anyDemo = demoFlags.gemini || demoFlags.claude || demoFlags.gas;
+
   return (
-    <>
-      <style>{cssVars}</style>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: var(--font-body); }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-        input::placeholder { color: var(--muted); }
-      `}</style>
-
-      <div className="min-h-screen" style={{ background: "var(--bg)", color: "var(--text)", fontFamily: "var(--font-body)" }}>
-        {!user ? (
-          <LoginScreen onLogin={handleLogin} />
-        ) : (
-          <div className="max-w-lg mx-auto min-h-screen flex flex-col">
-            {/* 상단 네비게이션 */}
-            <header
-              className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between"
-              style={{
-                background: "rgba(12,14,18,0.85)",
-                backdropFilter: "blur(12px)",
-                borderBottom: "1px solid var(--border-light)",
-              }}
-            >
-              <div className="flex items-center gap-2.5">
-                <div style={{ color: "var(--accent)" }}>
-                  <Icons.Logo />
-                </div>
-                <div>
-                  <h1 className="text-sm font-bold tracking-tight" style={{ color: "var(--heading)" }}>
-                    프로젝트 내일로
-                  </h1>
-                  <p className="text-[10px]" style={{ color: "var(--muted)" }}>
-                    AI 참여자 분석 시스템
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowSettings(true)}
-                  className="p-2 rounded-lg text-xs"
-                  style={{ color: "var(--muted)" }}
-                >
-                  ⚙
-                </button>
-                <button
-                  onClick={() => setUser(null)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
-                  style={{ color: "var(--muted)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-hover)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                >
-                  <Icons.Logout />
-                  <span>{user.name}</span>
-                </button>
-              </div>
-            </header>
-
-            {/* 메인 콘텐츠 */}
-            <main className="flex-1 p-4">
-              {/* 데모 모드 알림 */}
-              {(!gasUrl || !geminiKey || !claudeKey) && (
-                <div
-                  className="rounded-xl p-3 mb-4 flex items-start gap-2"
-                  style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.15)" }}
-                >
-                  <span className="text-sm mt-0.5">⚡</span>
-                  <div>
-                    <p className="text-xs font-medium" style={{ color: "var(--warning)" }}>
-                      {!geminiKey && !claudeKey && !gasUrl ? "데모 모드" : "일부 데모 모드"}
-                    </p>
-                    <p className="text-xs mt-0.5 space-y-0.5" style={{ color: "var(--muted)" }}>
-                      {!geminiKey && <span className="block">🔴 Gemini API Key 미설정 → 오늘은 분석이 데모로 동작</span>}
-                      {!claudeKey && <span className="block">🔴 Claude API Key 미설정 → 내일로 분석이 데모로 동작</span>}
-                      {!gasUrl && <span className="block">🔴 GAS URL 미설정 → 샘플 데이터로 동작</span>}
-                      <span className="block mt-1">설정(⚙)에서 API Key를 입력하세요.</span>
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* 로딩 상태 */}
-              {loading && (
-                <div className="flex items-center justify-center gap-2 py-8">
-                  <Icons.Spinner />
-                  <span className="text-sm" style={{ color: "var(--text-secondary)" }}>설문 응답을 불러오는 중...</span>
-                </div>
-              )}
-
-              {/* 에러 메시지 */}
-              {loadError && (
-                <div className="rounded-xl p-3 mb-4 flex items-start gap-2"
-                  style={{ background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.15)" }}>
-                  <span className="text-sm mt-0.5">⚠️</span>
-                  <div className="flex-1">
-                    <p className="text-xs font-medium" style={{ color: "var(--error)" }}>데이터 로딩 실패</p>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>{loadError}</p>
-                    <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>샘플 데이터로 표시합니다.</p>
-                  </div>
-                  <button onClick={() => fetchResponses(gasUrl)} className="text-xs px-2 py-1 rounded-lg"
-                    style={{ background: "var(--surface-hover)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}>
-                    재시도
-                  </button>
-                </div>
-              )}
-
-              {/* 메인 영역 */}
-              {!loading && (selectedResponse ? (
-                <ParticipantDetail
-                  response={selectedResponse}
-                  onBack={() => setSelectedResponse(null)}
-                  gasUrl={gasUrl}
-                  geminiKey={geminiKey}
-                  claudeKey={claudeKey}
-                />
-              ) : (
-                <>
-                  {/* 새로고침 버튼 */}
-                  {gasUrl && !loadError && (
-                    <div className="flex justify-end mb-2">
-                      <button onClick={() => fetchResponses(gasUrl)} className="text-[10px] px-2 py-1 rounded-lg flex items-center gap-1"
-                        style={{ color: "var(--muted)" }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-hover)"}
-                        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                        🔄 새로고침
-                      </button>
-                    </div>
-                  )}
-                  <ResponseList
-                    responses={responses}
-                    onSelect={setSelectedResponse}
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                  />
-                </>
-              ))}
-            </main>
-
-            {/* 하단 정보 */}
-            <footer className="p-4 text-center">
-              <p className="text-[10px]" style={{ color: "var(--muted)" }}>
-                충북청주지역자활센터 &middot; 프로젝트 내일로 {CONFIG.APP_VERSION}
-              </p>
-            </footer>
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div style={{ maxWidth: 540, margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg)" }}>
+        <header style={{ position: "sticky", top: 0, zIndex: 40, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "var(--blur-bg)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid var(--border-light)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ color: "var(--accent)" }}><I.Logo size={30} /></span>
+            <div>
+              <h1 style={{ fontSize: 14, fontWeight: 700, color: "var(--heading)" }}>프로젝트 내일로</h1>
+              <p style={{ fontSize: 10, color: "var(--muted)" }}>AI 참여자 분석 시스템</p>
+            </div>
           </div>
-        )}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button onClick={() => setShowSettings(true)} style={{ padding: 8, borderRadius: 13, border: "none", background: "transparent", cursor: "pointer", fontSize: 14, color: "var(--muted)" }}>⚙</button>
+            <button onClick={() => { setUser(null); setSelectedResponse(null); }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 13, border: "none", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--muted)", fontFamily: "inherit" }}>
+              <I.Logout size={16} /><span>{user.name}</span>
+            </button>
+          </div>
+        </header>
+
+        <main style={{ flex: 1, padding: 16 }}>
+          {anyDemo && (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, borderRadius: 16, padding: 12, marginBottom: 16, background: "rgba(200,137,58,.07)", border: "1px solid rgba(200,137,58,.2)" }}>
+              <span style={{ fontSize: 14 }}>⚡</span>
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "var(--warning)" }}>{demoFlags.gemini && demoFlags.claude && demoFlags.gas ? "데모 모드" : "일부 데모 모드"}</p>
+                <div style={{ fontSize: 12, marginTop: 2, color: "var(--muted)" }}>
+                  {demoFlags.gemini && <div>🔴 Gemini API Key 미설정 → 오늘은 분석이 데모로 동작</div>}
+                  {demoFlags.claude && <div>🔴 Claude API Key 미설정 → 내일로 분석이 데모로 동작</div>}
+                  {demoFlags.gas && <div>🔴 GAS URL 미설정 → 샘플 데이터로 동작</div>}
+                  <div style={{ marginTop: 4 }}>설정(⚙)에서 API Key를 입력하세요.</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {loading && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "32px 0" }}>
+              <span style={{ color: "var(--accent)" }}><I.Spinner size={20} /></span>
+              <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>설문 응답을 불러오는 중...</span>
+            </div>
+          )}
+
+          {loadError && !loading && (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, borderRadius: 16, padding: 12, marginBottom: 16, background: "rgba(214,106,92,.07)", border: "1px solid rgba(214,106,92,.2)" }}>
+              <span style={{ fontSize: 14 }}>⚠️</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "var(--error)" }}>데이터 로딩 실패</p>
+                <p style={{ fontSize: 12, marginTop: 2, color: "var(--muted)" }}>{loadError}</p>
+                <p style={{ fontSize: 12, marginTop: 2, color: "var(--muted)" }}>샘플 데이터로 표시합니다.</p>
+              </div>
+              <button onClick={() => fetchResponses(gasUrl)} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 10, cursor: "pointer", fontFamily: "inherit", background: "var(--surface-hover)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}>재시도</button>
+            </div>
+          )}
+
+          {!loading && (selectedResponse ? (
+            <ParticipantDetail response={selectedResponse} onBack={() => setSelectedResponse(null)}
+              gasUrl={gasUrl} geminiKey={geminiKey} claudeKey={claudeKey} />
+          ) : (
+            <>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <div style={{ display: "flex", gap: 4, padding: 4, borderRadius: 999, background: "var(--surface-active)", width: "fit-content" }}>
+                  {[["list", "참여자"], ["dash", "현황"]].map(([k, lbl]) => (
+                    <button key={k} onClick={() => setView(k)}
+                      style={{ padding: "7px 18px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 600,
+                        background: view === k ? "var(--surface)" : "transparent", color: view === k ? "var(--accent)" : "var(--text-secondary)",
+                        boxShadow: view === k ? "var(--shadow-card)" : "none", transition: "all var(--dur) var(--ease)" }}>{lbl}</button>
+                  ))}
+                </div>
+                {gasUrl && !loadError && (
+                  <button onClick={() => fetchResponses(gasUrl)} style={{ fontSize: 11, padding: "6px 10px", borderRadius: 10, cursor: "pointer", fontFamily: "inherit", background: "transparent", border: "none", color: "var(--muted)" }}>🔄 새로고침</button>
+                )}
+              </div>
+              {view === "list"
+                ? <ResponseList responses={responses} onSelect={setSelectedResponse} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+                : <DashboardScreen responses={responses} />}
+            </>
+          ))}
+        </main>
+
+        <footer style={{ padding: 16, textAlign: "center" }}>
+          <p style={{ fontSize: 10, color: "var(--muted)" }}>충북청주지역자활센터 · 프로젝트 내일로 {CONFIG.APP_VERSION}</p>
+        </footer>
       </div>
 
-      {/* 설정 모달 */}
-      <SettingsModal show={showSettings} onClose={() => setShowSettings(false)} gasUrl={gasUrl} setGasUrl={setGasUrl} geminiKey={geminiKey} setGeminiKey={setGeminiKey} claudeKey={claudeKey} setClaudeKey={setClaudeKey} />
-    </>
+      <SettingsModal show={showSettings} onClose={() => setShowSettings(false)}
+        gasUrl={gasUrl} setGasUrl={setGasUrl} geminiKey={geminiKey} setGeminiKey={setGeminiKey} claudeKey={claudeKey} setClaudeKey={setClaudeKey} />
+    </div>
   );
 }
 
-// ── 앱 렌더링 ──
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(React.createElement(App));
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
