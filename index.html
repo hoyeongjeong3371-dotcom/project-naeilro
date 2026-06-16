@@ -928,21 +928,41 @@ function PathSelect({ selected, setSelected, customText, setCustomText }) {
 
 // ── 참여자 상세 & 분석 ──
 function ParticipantDetail({ response, onBack, gasUrl, geminiKey, claudeKey }) {
-  const [oneulState, setOneulState] = useState("idle");
-  const [oneulResult, setOneulResult] = useState("");
-  const [oneulProgress, setOneulProgress] = useState(0);
+  // ── 분석 결과 캐시: 참여자별로 localStorage에 저장해두고, 재분석 전까지 유지 ──
+  const CACHE_KEY = `naeilro_analysis_${response.code}`;
+  const readCache = () => { try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || {}; } catch { return {}; } };
+  const cache0 = readCache();
+
+  const [oneulState, setOneulState] = useState(cache0.oneulResult ? "done" : "idle");
+  const [oneulResult, setOneulResult] = useState(cache0.oneulResult || "");
+  const [oneulProgress, setOneulProgress] = useState(cache0.oneulResult ? 100 : 0);
   const [oneulError, setOneulError] = useState("");
 
-  const [selectedPath, setSelectedPath] = useState("");
-  const [customPath, setCustomPath] = useState("");
+  const [selectedPath, setSelectedPath] = useState(cache0.selectedPath || "");
+  const [customPath, setCustomPath] = useState(cache0.customPath || "");
 
-  const [naeirState, setNaeirState] = useState("idle");
-  const [naeirResult, setNaeirResult] = useState("");
-  const [naeirProgress, setNaeirProgress] = useState(0);
+  const [naeirState, setNaeirState] = useState(cache0.naeirResult ? "done" : "idle");
+  const [naeirResult, setNaeirResult] = useState(cache0.naeirResult || "");
+  const [naeirProgress, setNaeirProgress] = useState(cache0.naeirResult ? 100 : 0);
   const [naeirError, setNaeirError] = useState("");
 
-  const [naeirNote, setNaeirNote] = useState("");
-  const [naeirFiles, setNaeirFiles] = useState([]);
+  const [naeirNote, setNaeirNote] = useState(cache0.naeirNote || "");
+  const [naeirFiles, setNaeirFiles] = useState(cache0.naeirFiles || []);
+  const [savedAt, setSavedAt] = useState(cache0.savedAt || "");
+
+  // 분석 결과가 생기면 자동 저장, 재분석으로 모두 비워지면 캐시 삭제. (마운트 직후 1회는 건너뜀)
+  const skipSave = useRef(true);
+  useEffect(() => {
+    if (skipSave.current) { skipSave.current = false; return; }
+    if (oneulResult || naeirResult) {
+      const stamp = new Date().toISOString();
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ oneulResult, naeirResult, selectedPath, customPath, naeirNote, naeirFiles, savedAt: stamp }));
+      setSavedAt(stamp);
+    } else {
+      localStorage.removeItem(CACHE_KEY);
+      setSavedAt("");
+    }
+  }, [oneulResult, naeirResult, selectedPath, customPath, naeirNote, naeirFiles]);
 
   const resolvedPath = selectedPath === "custom" ? customPath.trim() : selectedPath;
 
@@ -1079,6 +1099,7 @@ function ParticipantDetail({ response, onBack, gasUrl, geminiKey, claudeKey }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--heading)" }}>{response.code}</h2>
           <p style={{ fontSize: 12, color: "var(--muted)" }}>{response.org} · {response.timestamp}</p>
+          {savedAt && <p style={{ fontSize: 10, marginTop: 2, color: "var(--naeiro)", display: "flex", alignItems: "center", gap: 4 }}>💾 저장된 분석 · {new Date(savedAt).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })} (재분석 전까지 유지)</p>}
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {oneulState === "done" && <Badge tone="oneul">오늘은</Badge>}
